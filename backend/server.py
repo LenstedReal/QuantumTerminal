@@ -168,6 +168,8 @@ class LoginWith2FAInput(BaseModel):
 @api_router.post("/auth/register")
 async def register(inp: RegisterInput, response: Response, request: Request):
     email = inp.email.lower().strip()
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Geçerli bir e-posta adresi girin.")
     if await db.users.find_one({"email": email}):
         raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı.")
     validate_strong_password(inp.password)
@@ -200,6 +202,8 @@ async def register(inp: RegisterInput, response: Response, request: Request):
 @api_router.post("/auth/login")
 async def login(inp: LoginInput, response: Response, request: Request):
     email = inp.email.lower().strip()
+    if not email or "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Geçerli bir e-posta adresi girin.")
     ip = request.headers.get("X-Forwarded-For", request.headers.get("X-Real-IP", request.client.host if request.client else "0.0.0.0"))
     if isinstance(ip, str) and "," in ip:
         ip = ip.split(",")[0].strip()
