@@ -1,4 +1,6 @@
 {
+  "buildCommand": "yarn install && yarn build",
+  "installCommand": "yarn install",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
