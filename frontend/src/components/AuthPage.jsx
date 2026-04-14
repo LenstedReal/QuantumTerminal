@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Shield, Mail, Lock, User, AlertTriangle, Check, X } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : null;
 
 function PasswordStrength({ password }) {
   const checks = [
@@ -39,7 +38,6 @@ function PasswordStrength({ password }) {
 
 export default function AuthPage() {
   const { login, register, verify2FALogin } = useAuth();
-  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,12 +51,15 @@ export default function AuthPage() {
   const [discordLoading, setDiscordLoading] = useState(false);
 
   useEffect(() => {
-    const err = searchParams.get("error");
-    if (err === "discord_no_email") setError("Discord hesabınızda e-posta bulunamadı.");
-    if (err === "discord_failed") setError("Discord girişi başarısız oldu. Tekrar deneyin.");
-    if (err === "discord_state") setError("Güvenlik doğrulaması başarısız. Tekrar deneyin.");
-    if (err === "discord_config") setError("Discord yapılandırması henüz tamamlanmadı.");
-  }, [searchParams]);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err === "discord_no_email") setError("Discord hesabınızda e-posta bulunamadı.");
+      if (err === "discord_failed") setError("Discord girişi başarısız oldu. Tekrar deneyin.");
+      if (err === "discord_state") setError("Güvenlik doğrulaması başarısız. Tekrar deneyin.");
+      if (err === "discord_config") setError("Discord yapılandırması henüz tamamlanmadı.");
+    } catch {}
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -95,10 +96,11 @@ export default function AuthPage() {
   };
 
   const handleDiscordLogin = async () => {
+    if (!API) { setError("Backend bağlantısı yapılandırılmamış."); return; }
     setDiscordLoading(true);
     setError("");
     try {
-      const { data } = await axios.get(`${API}/auth/discord/url`);
+      const { data } = await axios.get(`${API}/auth/discord/url`, { withCredentials: true });
       window.location.href = data.url;
     } catch (e) {
       const detail = e.response?.data?.detail;

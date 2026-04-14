@@ -50,11 +50,11 @@ export default function Dashboard() {
   }, [fetchData, addLog]);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] scanline" data-testid="dashboard">
+    <div className="flex flex-col h-screen scanline" data-testid="dashboard">
       <Header />
       <TickerBar marketData={marketData} />
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-[2px] lg:overflow-hidden" style={{ background: 'rgba(30,41,59,0.2)' }} data-testid="terminal-grid">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-[2px] overflow-auto lg:overflow-hidden" style={{ background: 'rgba(30,41,59,0.2)' }} data-testid="terminal-grid">
         {/* Left: Asset Intelligence */}
         <section className="flex flex-col overflow-hidden lg:order-1 order-2" style={{ background: 'rgba(7,10,16,0.8)' }}>
           <AssetIntelligence marketData={marketData} systemLogs={systemLogs} loginLogs={loginLogs} />
