@@ -1,3 +1,1 @@
-/* TradingView widget overrides */
-.tradingview-widget-container { height: 100% !important; }
-.tradingview-widget-container iframe { height: 100% !important; }
+/* Empty - all styles in index.css */

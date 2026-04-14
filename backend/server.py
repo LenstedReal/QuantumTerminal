@@ -13,6 +13,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from user_agents import parse as parse_ua
 
+import re
+
 # MongoDB
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -24,6 +26,10 @@ api_router = APIRouter(prefix="/api")
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALGORITHM = "HS256"
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
+DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
+DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
+DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -56,22 +62,22 @@ async def get_current_user(request: Request) -> dict:
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Kimlik doğrulanamadı")
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
+            raise HTTPException(status_code=401, detail="Geçersiz token tipi")
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
         if not user:
-            raise HTTPException(status_code=401, detail="User not found")
+            raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
         user["_id"] = str(user["_id"])
         user.pop("password_hash", None)
         user.pop("totp_secret", None)
         return user
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
+        raise HTTPException(status_code=401, detail="Token süresi doldu")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Geçersiz token")
 
 # --- Login Activity Logging ---
 async def log_login_activity(request: Request, email: str, success: bool, user_id: str = None):
@@ -101,7 +107,7 @@ async def check_brute_force(ip: str, email: str):
     if attempt and attempt.get("count", 0) >= 5:
         locked_until = attempt.get("locked_until")
         if locked_until and datetime.now(timezone.utc) < datetime.fromisoformat(locked_until):
-            raise HTTPException(status_code=429, detail="Too many failed attempts. Try again in 15 minutes.")
+            raise HTTPException(status_code=429, detail="Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin.")
         else:
             await db.login_attempts.delete_one({"identifier": identifier})
 
@@ -120,6 +126,18 @@ async def record_failed_attempt(ip: str, email: str):
 async def clear_failed_attempts(ip: str, email: str):
     identifier = f"{ip}:{email}"
     await db.login_attempts.delete_one({"identifier": identifier})
+
+def validate_strong_password(password: str):
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Parola en az 8 karakter olmalıdır.")
+    if not re.search(r'[A-Z]', password):
+        raise HTTPException(status_code=400, detail="Parola en az 1 büyük harf içermelidir.")
+    if not re.search(r'[a-z]', password):
+        raise HTTPException(status_code=400, detail="Parola en az 1 küçük harf içermelidir.")
+    if not re.search(r'[0-9]', password):
+        raise HTTPException(status_code=400, detail="Parola en az 1 rakam içermelidir.")
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
+        raise HTTPException(status_code=400, detail="Parola en az 1 özel karakter içermelidir (!@#$%^&* vb.)")
 
 # --- Models ---
 class RegisterInput(BaseModel):
@@ -151,9 +169,8 @@ class LoginWith2FAInput(BaseModel):
 async def register(inp: RegisterInput, response: Response, request: Request):
     email = inp.email.lower().strip()
     if await db.users.find_one({"email": email}):
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if len(inp.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+        raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı.")
+    validate_strong_password(inp.password)
 
     verification_code = str(secrets.randbelow(900000) + 100000)
     user_doc = {
@@ -194,7 +211,7 @@ async def login(inp: LoginInput, response: Response, request: Request):
         await record_failed_attempt(ip, email)
         if user:
             await log_login_activity(request, email, False)
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Geçersiz e-posta veya parola.")
 
     user_id = str(user["_id"])
 
@@ -351,6 +368,87 @@ async def get_login_logs():
     logs = await db.login_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(100)
     return logs
 
+# --- Discord OAuth ---
+DISCORD_API_BASE = "https://discord.com/api/v10"
+DISCORD_AUTH_URL = "https://discord.com/api/oauth2/authorize"
+DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
+
+@api_router.get("/auth/discord/url")
+async def get_discord_auth_url():
+    if not DISCORD_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Discord entegrasyonu henüz yapılandırılmadı.")
+    params = {
+        "client_id": DISCORD_CLIENT_ID,
+        "redirect_uri": DISCORD_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "identify email",
+    }
+    url = f"{DISCORD_AUTH_URL}?" + "&".join(f"{k}={v}" for k, v in params.items())
+    return {"url": url}
+
+@api_router.get("/auth/discord/callback")
+async def discord_callback(code: str, request: Request, response: Response):
+    if not DISCORD_CLIENT_ID or not DISCORD_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="Discord yapılandırması eksik.")
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as hc:
+            token_resp = await hc.post(DISCORD_TOKEN_URL, data={
+                "client_id": DISCORD_CLIENT_ID,
+                "client_secret": DISCORD_CLIENT_SECRET,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": DISCORD_REDIRECT_URI,
+            }, headers={"Content-Type": "application/x-www-form-urlencoded"})
+            token_resp.raise_for_status()
+            tokens = token_resp.json()
+
+            user_resp = await hc.get(f"{DISCORD_API_BASE}/users/@me", headers={
+                "Authorization": f"Bearer {tokens['access_token']}"
+            })
+            user_resp.raise_for_status()
+            discord_user = user_resp.json()
+
+        discord_email = discord_user.get("email")
+        discord_name = discord_user.get("global_name") or discord_user.get("username", "Discord Kullanıcı")
+        discord_id = discord_user.get("id")
+
+        if not discord_email:
+            from starlette.responses import RedirectResponse
+            return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_no_email")
+
+        existing = await db.users.find_one({"email": discord_email.lower()})
+        if existing:
+            user_id = str(existing["_id"])
+        else:
+            result = await db.users.insert_one({
+                "email": discord_email.lower(),
+                "password_hash": "",
+                "name": discord_name,
+                "role": "user",
+                "email_verified": True,
+                "discord_id": discord_id,
+                "totp_enabled": False,
+                "totp_secret": None,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            user_id = str(result.inserted_id)
+
+        access = create_access_token(user_id, discord_email.lower())
+        refresh = create_refresh_token(user_id)
+
+        await log_login_activity(request, discord_email, True, user_id)
+
+        from starlette.responses import RedirectResponse
+        redirect = RedirectResponse(url=FRONTEND_URL, status_code=302)
+        redirect.set_cookie(key="access_token", value=access, httponly=True, secure=False, samesite="lax", max_age=1800, path="/")
+        redirect.set_cookie(key="refresh_token", value=refresh, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+        return redirect
+
+    except Exception as e:
+        logger.error(f"Discord OAuth error: {e}")
+        from starlette.responses import RedirectResponse
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_failed")
+
 # --- CoinGecko Proxy ---
 @api_router.get("/market-data")
 async def get_market_data():
@@ -399,7 +497,7 @@ app.include_router(api_router)
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=[FRONTEND_URL, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
