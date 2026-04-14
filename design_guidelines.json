@@ -1,0 +1,67 @@
+{
+  "theme": "dark",
+  "archetype": "4 (Swiss & High-Contrast) adapted for Dark Mode Trading / Performance Pro",
+  "branding": {
+    "name": "LENSTEDREAL QUANTUM TERMINAL V10",
+    "company": "LENSTEDREAL SYSTEMS",
+    "vibe": "Extremely professional, Bloomberg Terminal equivalent, high-end fintech platform, pure data, no-nonsense.",
+    "fonts": {
+      "heading": "IBM Plex Sans",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "colors": {
+      "background": "#09090B",
+      "surface": "#121214",
+      "surface_hover": "#1E1E22",
+      "border": "#27272A",
+      "text_primary": "#FAFAFA",
+      "text_secondary": "#A1A1AA",
+      "accent_positive": "#10B981",
+      "accent_negative": "#EF4444",
+      "accent_brand": "#3B82F6"
+    }
+  },
+  "layout": {
+    "strategy": "The 'Control Room' Grid (Mode B). Dense, functional, strict hierarchy.",
+    "spacing": "Tight padding (p-2 to p-4) for data density. Gap-2 or gap-4 for grid layouts to maximize screen real estate.",
+    "grid_structure": "grid-cols-1 lg:grid-cols-12. Main chart spans col-span-12 lg:col-span-8 or 9. Sidebars for intelligence/logs span col-span-12 lg:col-span-3 or 4.",
+    "mobile_strategy": "Mobile-first bottom-sheet navigation or stacked cards. The terminal grid must collapse gracefully to a single column on mobile, prioritizing the chart and active trades."
+  },
+  "components": {
+    "cards": "Flat, sharp corners (rounded-sm or rounded-none), 1px solid border-zinc-800. No soft shadows. Use 'Grid Borders' look.",
+    "navigation": "Dense top bar. Must include the LENSTEDREAL SYSTEMS logo, a fast-moving real-time ticker, and the Mobile App links ('Download on Play Store' button and 'App Store Coming Soon' badge) elegantly placed on the right side.",
+    "charts": "Embed TradingView lightweight charts widget or Advanced Chart Widget. Must be forced into dark mode. Ensure it fills the container perfectly.",
+    "data_tables": "Use JetBrains Mono for all tickers, prices, and percentages. Right-align numbers. Green for positive, Red for negative.",
+    "buttons": "Sharp edges, minimal padding. Play Store button should be a high-contrast primary button with an icon. App Store badge should be a muted, inactive-looking element.",
+    "system_logs": "A dedicated pane that looks like a raw developer terminal. Black background, monospace font, showing system events, order executions, and intelligence pings.",
+    "asset_intelligence": "A panel showing AI-driven insights, technical metrics, and market scanners with progress bars or sparklines."
+  },
+  "motion": {
+    "animations": "Minimal. Flash green/red backgrounds briefly when data updates. Very fast transitions (75ms - 150ms). No slow, bouncy animations.",
+    "interactions": "Hover states must be extremely clear for dense data rows (e.g., hover:bg-zinc-800/50)."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1772050138764-2b1925e0c6b2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNoJTIwZGF0YSUyMHRleHR1cmV8ZW58MHx8fHwxNzc2MTY1OTU3fDA&ixlib=rb-4.1.0&q=85",
+        "category": "background",
+        "description": "Subtle abstract wavy dark lines. Can be used at 5% opacity behind empty states or as a subtle watermark texture behind the Asset Intelligence panel."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: 'lucide-react' (or 'react-icons') for App Store/Play Store icons, and 'recharts' if building custom sparklines.",
+    "Add Google Fonts for 'IBM Plex Sans' and 'JetBrains Mono' to index.html.",
+    "Build a 'Control Room' grid layout using Tailwind grid-cols-12.",
+    "Force the app into dark mode universally (bg-zinc-950 text-zinc-50). Do not support light mode; it is a dark terminal.",
+    "Create the header: Logo on left, scrolling text marquee (ticker) in the center, and the mobile download badges on the right.",
+    "The 'Play Store' button should be active/clickable. The 'App Store' button should be a badge explicitly saying 'Coming Soon' (opacity-70, cursor-not-allowed).",
+    "Integrate the TradingView Advanced Chart Widget or Lightweight Chart in the main center panel (col-span-8 or 9).",
+    "Build the 'Asset Intelligence Panel' and 'Technical Metrics' on the right sidebar (col-span-3 or 4) with dense rows of data.",
+    "Build the 'System Activity Logs' panel at the bottom, using a strict monospace font, simulating a streaming command-line interface.",
+    "All numerical data (prices, percentages, volumes) MUST use the monospace font class (e.g., font-mono).",
+    "Ensure perfect alignment of all tabular data. Use sharp borders (border-zinc-800) to separate panes, akin to an IDE or Bloomberg Terminal.",
+    "Add 'data-testid' to all interactive elements."
+  ]
+}
