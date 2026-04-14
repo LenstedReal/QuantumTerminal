@@ -19,7 +19,9 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${API}/auth/me`, { withCredentials: true });
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      if (!backendUrl) { setUser(false); setLoading(false); return; }
+      const { data } = await axios.get(`${API}/auth/me`, { withCredentials: true, timeout: 5000 });
       setUser(data);
     } catch {
       setUser(false);

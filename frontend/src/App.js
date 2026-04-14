@@ -7,20 +7,34 @@ import Dashboard from "@/components/Dashboard";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) {
+    return <div style={{ background: '#020204', minHeight: '100vh' }} />;
+  }
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
 function AppRoutes() {
   const { user, loading } = useAuth();
-  if (loading) return null;
+
+  // Loading durumunda 2 saniye bekle, sonra login göster
+  const [timedOut, setTimedOut] = React.useState(false);
+  React.useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (loading && !timedOut) {
+    return <div style={{ background: '#020204', minHeight: '100vh' }} />;
+  }
 
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={
+        loading || !user ? <Navigate to="/login" replace /> : <ProtectedRoute><Dashboard /></ProtectedRoute>
+      } />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
