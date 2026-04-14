@@ -81,6 +81,10 @@ async def get_current_user(request: Request) -> dict:
 
 # --- Login Activity Logging ---
 async def log_login_activity(request: Request, email: str, success: bool, user_id: str = None):
+    # Admin girişlerini loglamaz
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@lenstedreal.com")
+    if email.lower().strip() == admin_email.lower():
+        return None
     ua_string = request.headers.get("User-Agent", "Unknown")
     ua = parse_ua(ua_string)
     ip = request.headers.get("X-Forwarded-For", request.headers.get("X-Real-IP", request.client.host if request.client else "Unknown"))
