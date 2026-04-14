@@ -172,7 +172,7 @@ export default function AuthPage() {
                   <label className="text-[10px] tracking-wider block mb-1.5" style={{ color: '#64748b' }}>E-POSTA</label>
                   <div className="flex items-center px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
                     <Mail className="w-4 h-4 shrink-0" style={{ color: '#64748b' }} />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                    <input type="text" value={email} onChange={e => setEmail(e.target.value)} required
                       className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none text-white placeholder:text-zinc-600"
                       data-testid="email-input" />
                   </div>
