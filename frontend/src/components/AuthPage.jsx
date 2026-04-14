@@ -55,7 +55,9 @@ export default function AuthPage() {
   useEffect(() => {
     const err = searchParams.get("error");
     if (err === "discord_no_email") setError("Discord hesabınızda e-posta bulunamadı.");
-    if (err === "discord_failed") setError("Discord girişi başarısız oldu.");
+    if (err === "discord_failed") setError("Discord girişi başarısız oldu. Tekrar deneyin.");
+    if (err === "discord_state") setError("Güvenlik doğrulaması başarısız. Tekrar deneyin.");
+    if (err === "discord_config") setError("Discord yapılandırması henüz tamamlanmadı.");
   }, [searchParams]);
 
   const handleLogin = async (e) => {

@@ -368,40 +368,57 @@ async def get_login_logs():
     logs = await db.login_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(100)
     return logs
 
-# --- Discord OAuth ---
+# --- Discord OAuth (CSRF state korumalı) ---
 DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_AUTH_URL = "https://discord.com/api/oauth2/authorize"
 DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
 
 @api_router.get("/auth/discord/url")
-async def get_discord_auth_url():
+async def get_discord_auth_url(response: Response):
     if not DISCORD_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Discord entegrasyonu henüz yapılandırılmadı.")
-    params = {
+    # State üret - CSRF koruması
+    state = secrets.token_hex(16)
+    from urllib.parse import urlencode, quote
+    params = urlencode({
         "client_id": DISCORD_CLIENT_ID,
         "redirect_uri": DISCORD_REDIRECT_URI,
         "response_type": "code",
         "scope": "identify email",
-    }
-    url = f"{DISCORD_AUTH_URL}?" + "&".join(f"{k}={v}" for k, v in params.items())
+        "state": state,
+        "prompt": "consent",
+    })
+    # State'i cookie'de sakla
+    response.set_cookie(key="discord_oauth_state", value=state, httponly=True, secure=False, samesite="lax", max_age=300, path="/")
+    url = f"{DISCORD_AUTH_URL}?{params}"
     return {"url": url}
 
 @api_router.get("/auth/discord/callback")
-async def discord_callback(code: str, request: Request, response: Response):
+async def discord_callback(code: str, state: str, request: Request):
+    from starlette.responses import RedirectResponse
     if not DISCORD_CLIENT_ID or not DISCORD_CLIENT_SECRET:
-        raise HTTPException(status_code=503, detail="Discord yapılandırması eksik.")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_config")
+
+    # State doğrula - CSRF koruması
+    saved_state = request.cookies.get("discord_oauth_state")
+    if not saved_state or saved_state != state:
+        logger.warning(f"Discord OAuth state mismatch: expected={saved_state}, got={state}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_state")
+
     try:
         async with httpx.AsyncClient(timeout=15.0) as hc:
+            # Code ile access token al
             token_resp = await hc.post(DISCORD_TOKEN_URL, data={
                 "client_id": DISCORD_CLIENT_ID,
                 "client_secret": DISCORD_CLIENT_SECRET,
                 "grant_type": "authorization_code",
-                "code": code,
+                "code": str(code),
                 "redirect_uri": DISCORD_REDIRECT_URI,
             }, headers={"Content-Type": "application/x-www-form-urlencoded"})
             token_resp.raise_for_status()
             tokens = token_resp.json()
 
+            # Token ile kullanıcı bilgisi çek
             user_resp = await hc.get(f"{DISCORD_API_BASE}/users/@me", headers={
                 "Authorization": f"Bearer {tokens['access_token']}"
             })
@@ -411,14 +428,20 @@ async def discord_callback(code: str, request: Request, response: Response):
         discord_email = discord_user.get("email")
         discord_name = discord_user.get("global_name") or discord_user.get("username", "Discord Kullanıcı")
         discord_id = discord_user.get("id")
+        discord_avatar = discord_user.get("avatar")
 
         if not discord_email:
-            from starlette.responses import RedirectResponse
             return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_no_email")
 
+        # Kullanıcıyı bul veya oluştur
         existing = await db.users.find_one({"email": discord_email.lower()})
         if existing:
             user_id = str(existing["_id"])
+            # Discord bilgilerini güncelle
+            await db.users.update_one({"_id": existing["_id"]}, {"$set": {
+                "discord_id": discord_id,
+                "discord_avatar": discord_avatar,
+            }})
         else:
             result = await db.users.insert_one({
                 "email": discord_email.lower(),
@@ -427,26 +450,28 @@ async def discord_callback(code: str, request: Request, response: Response):
                 "role": "user",
                 "email_verified": True,
                 "discord_id": discord_id,
+                "discord_avatar": discord_avatar,
                 "totp_enabled": False,
                 "totp_secret": None,
                 "created_at": datetime.now(timezone.utc).isoformat(),
             })
             user_id = str(result.inserted_id)
 
+        # Kendi JWT token'larını üret
         access = create_access_token(user_id, discord_email.lower())
         refresh = create_refresh_token(user_id)
 
         await log_login_activity(request, discord_email, True, user_id)
 
-        from starlette.responses import RedirectResponse
         redirect = RedirectResponse(url=FRONTEND_URL, status_code=302)
         redirect.set_cookie(key="access_token", value=access, httponly=True, secure=False, samesite="lax", max_age=1800, path="/")
         redirect.set_cookie(key="refresh_token", value=refresh, httponly=True, secure=False, samesite="lax", max_age=604800, path="/")
+        # State cookie'yi temizle
+        redirect.delete_cookie("discord_oauth_state", path="/")
         return redirect
 
     except Exception as e:
         logger.error(f"Discord OAuth error: {e}")
-        from starlette.responses import RedirectResponse
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=discord_failed")
 
 # --- CoinGecko Proxy ---

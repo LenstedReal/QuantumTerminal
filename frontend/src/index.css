@@ -8,8 +8,7 @@
   --bg: #020204;
   --panel: rgba(10, 12, 18, 0.96);
   --neon: #00f2ff;
-  --neon-glow: rgba(0, 242, 255, 0.4);
-  --neon-dim: rgba(0, 242, 255, 0.15);
+  --neon-glow: rgba(0, 242, 255, 0.25);
   --danger: #ff003c;
   --success: #00ff6a;
   --text-main: #cbd5e1;
@@ -18,58 +17,50 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { background: #020204; color-scheme: dark; }
 
 body {
-  background: radial-gradient(ellipse at 20% 50%, rgba(0,242,255,0.03) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 50%, rgba(0,242,255,0.02) 0%, transparent 50%),
-              radial-gradient(circle at center, #0a0a15 0%, #020204 100%);
+  background: radial-gradient(circle at center, #0a0a15 0%, #020204 100%);
   color: var(--text-main);
   font-family: 'JetBrains Mono', monospace;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   height: 100dvh;
   overflow: hidden;
 }
 
 #root { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-/* Scanline */
+/* Scanline - ince */
 .scanline::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.08) 50%);
+  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.06) 50%);
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 50;
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: #020204; }
-::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.25); border-radius: 0; }
+::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.2); }
 ::-webkit-scrollbar-thumb:hover { background: var(--neon); }
 
-/* Neon Blink */
+/* Blink */
 @keyframes blinker { 50% { opacity: 0.3; } }
 .blink { animation: blinker 2s infinite; }
 
-/* Neon Glow Pulse */
-@keyframes neon-pulse {
-  0%, 100% { text-shadow: 0 0 5px rgba(0,242,255,0.5), 0 0 10px rgba(0,242,255,0.3); }
-  50% { text-shadow: 0 0 10px rgba(0,242,255,0.8), 0 0 20px rgba(0,242,255,0.5), 0 0 40px rgba(0,242,255,0.2); }
+/* Hafif neon text glow - orta karar */
+.neon-glow {
+  text-shadow: 0 0 6px rgba(0,242,255,0.3);
 }
-.neon-glow { animation: neon-pulse 3s ease-in-out infinite; }
 
-/* Neon Border Pulse */
-@keyframes border-pulse {
-  0%, 100% { border-color: rgba(0,242,255,0.4); box-shadow: 0 0 5px rgba(0,242,255,0.1); }
-  50% { border-color: rgba(0,242,255,0.8); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+/* Hafif border glow - orta karar */
+.neon-border {
+  box-shadow: 0 0 8px rgba(0,242,255,0.08);
 }
-.neon-border { animation: border-pulse 4s ease-in-out infinite; }
 
 /* Ticker */
 @keyframes ticker-scroll {
@@ -79,39 +70,28 @@ body {
 .ticker-animate { animation: ticker-scroll 35s linear infinite; }
 
 /* Flash */
-@keyframes flash-green { 0% { background-color: rgba(0,255,106,0.15); } 100% { background-color: transparent; } }
-@keyframes flash-red { 0% { background-color: rgba(255,0,60,0.15); } 100% { background-color: transparent; } }
+@keyframes flash-green { 0% { background-color: rgba(0,255,106,0.12); } 100% { background-color: transparent; } }
+@keyframes flash-red { 0% { background-color: rgba(255,0,60,0.12); } 100% { background-color: transparent; } }
 .flash-green { animation: flash-green 0.5s ease-out; }
 .flash-red { animation: flash-red 0.5s ease-out; }
 
-/* Neon Input Focus */
+/* Input focus - ince glow */
 input:focus {
   border-color: var(--neon) !important;
-  box-shadow: 0 0 8px rgba(0,242,255,0.3), inset 0 0 4px rgba(0,242,255,0.1) !important;
+  box-shadow: 0 0 4px rgba(0,242,255,0.2) !important;
   outline: none;
 }
 
-/* Neon Button Hover */
+/* Button hover - ince */
 .neon-btn {
-  position: relative;
-  overflow: hidden;
   transition: all 0.15s ease;
 }
-.neon-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(0,242,255,0.1), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.4s ease;
+.neon-btn:hover {
+  box-shadow: 0 0 8px rgba(0,242,255,0.2);
+  filter: brightness(1.1);
 }
-.neon-btn:hover::before { transform: translateX(100%); }
-.neon-btn:hover { box-shadow: 0 0 15px rgba(0,242,255,0.3); }
 
-/* Password Strength Indicator */
-.strength-bar { height: 2px; transition: width 0.3s ease, background-color 0.3s ease; }
-
-/* Mobile responsive */
+/* Mobile */
 @media (max-width: 1100px) {
   body, #root { overflow-y: auto; height: auto; min-height: 100dvh; }
 }
@@ -120,6 +100,6 @@ input:focus {
   [data-debug-wrapper="true"] { display: contents !important; }
 }
 
-/* TradingView overrides */
+/* TradingView */
 .tradingview-widget-container { height: 100% !important; }
 .tradingview-widget-container iframe { height: 100% !important; }
