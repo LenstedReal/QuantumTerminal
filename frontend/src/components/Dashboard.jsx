@@ -45,7 +45,7 @@ export default function Dashboard() {
     addLog("LENSTEDREAL Quantum Terminal V10 başlatılıyor...");
     addLog("Güvenli kuantum bağlantısı kuruluyor...");
     fetchData();
-    const interval = setInterval(fetchData, 60000);
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData, addLog]);
 

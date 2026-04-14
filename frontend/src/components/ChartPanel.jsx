@@ -78,7 +78,7 @@ export default function ChartPanel() {
             ))}
           </div>
         </div>
-        <span className="text-[11px] font-bold" style={{ color: '#00f2ff' }}>Live</span>
+        <span className="text-[11px] font-bold" style={{ color: '#00f2ff' }}>Canlı</span>
       </div>
 
       {/* Chart */}

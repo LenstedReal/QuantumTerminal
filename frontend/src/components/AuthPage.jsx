@@ -70,7 +70,7 @@ export default function AuthPage() {
         </div>
 
         {/* Auth Card */}
-        <div className="border rounded-xl p-6" style={{ background: 'rgba(7,10,16,0.9)', borderColor: 'rgba(30,41,59,0.6)' }}>
+        <div className="border rounded-sm p-6" style={{ background: 'rgba(7,10,16,0.9)', borderColor: 'rgba(30,41,59,0.6)' }}>
           {mode === "2fa" ? (
             <>
               <div className="flex items-center gap-2 mb-6">
@@ -85,7 +85,7 @@ export default function AuthPage() {
                   onChange={e => setTotpCode(e.target.value)}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full px-4 py-3 rounded text-center text-lg tracking-[8px] font-mono font-bold outline-none"
+                  className="w-full px-4 py-3 rounded-sm text-center text-lg tracking-[8px] font-mono font-bold outline-none"
                   style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)', color: '#fff' }}
                   data-testid="2fa-code-input"
                   autoFocus
@@ -94,7 +94,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-4 py-3 rounded font-bold text-sm tracking-wider transition-all"
+                  className="w-full mt-4 py-3 rounded-sm font-bold text-sm tracking-wider transition-all"
                   style={{ background: '#00f2ff', color: '#020204' }}
                   data-testid="2fa-submit-btn"
                 >
@@ -134,7 +134,7 @@ export default function AuthPage() {
                 {mode === "register" && (
                   <div className="mb-4">
                     <label className="text-[10px] tracking-wider block mb-1.5" style={{ color: '#64748b' }}>İSİM</label>
-                    <div className="flex items-center rounded px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
+                    <div className="flex items-center rounded-sm px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
                       <User className="w-4 h-4 shrink-0" style={{ color: '#64748b' }} />
                       <input
                         type="text"
@@ -150,13 +150,13 @@ export default function AuthPage() {
                 )}
                 <div className="mb-4">
                   <label className="text-[10px] tracking-wider block mb-1.5" style={{ color: '#64748b' }}>E-POSTA</label>
-                  <div className="flex items-center rounded px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
+                  <div className="flex items-center rounded-sm px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
                     <Mail className="w-4 h-4 shrink-0" style={{ color: '#64748b' }} />
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="your@email.com"
+                      placeholder="e-posta@adresiniz.com"
                       required
                       className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none text-white placeholder:text-zinc-600"
                       data-testid="email-input"
@@ -165,7 +165,7 @@ export default function AuthPage() {
                 </div>
                 <div className="mb-4">
                   <label className="text-[10px] tracking-wider block mb-1.5" style={{ color: '#64748b' }}>PAROLA</label>
-                  <div className="flex items-center rounded px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
+                  <div className="flex items-center rounded-sm px-3" style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(30,41,59,0.6)' }}>
                     <Lock className="w-4 h-4 shrink-0" style={{ color: '#64748b' }} />
                     <input
                       type={showPass ? "text" : "password"}
@@ -186,7 +186,7 @@ export default function AuthPage() {
                 {error && <div className="mb-3 text-xs flex items-center gap-1" style={{ color: '#ff003c' }}><AlertTriangle className="w-3 h-3" />{error}</div>}
 
                 {verificationCode && mode === "register" && (
-                  <div className="mb-3 p-3 rounded text-xs" style={{ background: 'rgba(0,242,255,0.1)', border: '1px solid rgba(0,242,255,0.3)', color: '#00f2ff' }}>
+                  <div className="mb-3 p-3 rounded-sm text-xs" style={{ background: 'rgba(0,242,255,0.1)', border: '1px solid rgba(0,242,255,0.3)', color: '#00f2ff' }}>
                     E-posta doğrulama kodu: <span className="font-bold text-sm">{verificationCode}</span>
                   </div>
                 )}
@@ -194,7 +194,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded font-bold text-sm tracking-wider transition-all hover:opacity-90"
+                  className="w-full py-3 rounded-sm font-bold text-sm tracking-wider transition-all hover:opacity-90"
                   style={{ background: '#00f2ff', color: '#020204' }}
                   data-testid={mode === "login" ? "login-submit-btn" : "register-submit-btn"}
                 >
@@ -205,15 +205,15 @@ export default function AuthPage() {
               {/* Discord Login */}
               <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(30,41,59,0.6)' }}>
                 <button
-                  className="w-full py-2.5 rounded text-xs font-bold tracking-wider flex items-center justify-center gap-2 transition-all hover:opacity-90"
+                  className="w-full py-2.5 rounded-sm text-[10px] font-bold tracking-wider flex items-center justify-center gap-2 transition-all opacity-60 cursor-not-allowed"
                   style={{ background: '#5865F2', color: '#fff' }}
                   data-testid="discord-login-btn"
-                  onClick={() => alert("Discord OAuth entegrasyonu için Discord uygulama bilgileri gereklidir. Yönetici ile iletişime geçin.")}
+                  disabled
                 >
                   <svg width="16" height="12" viewBox="0 0 127.14 96.36" fill="white">
                     <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
                   </svg>
-                  DISCORD ILE GIRIS YAP
+                  DISCORD İLE GİRİŞ YAP — YAKINDA
                 </button>
               </div>
             </>

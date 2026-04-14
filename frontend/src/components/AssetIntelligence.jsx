@@ -71,7 +71,7 @@ export default function AssetIntelligence({ marketData, systemLogs, loginLogs })
               <div key={i} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(30,41,59,0.6)', background: 'rgba(255,255,255,0.01)' }} data-testid={`asset-item-${i}`}>
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-white" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{asset.symbol}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{
+                  <span className="text-[10px] font-bold px-2 py-0.5" style={{
                     color: asset.statusColor,
                     border: `1px solid ${asset.statusColor}`,
                     background: `${asset.statusColor}10`
@@ -80,7 +80,7 @@ export default function AssetIntelligence({ marketData, systemLogs, loginLogs })
                   </span>
                 </div>
                 <p className="text-[10px] mt-1" style={{ color: '#64748b' }}>
-                  Order: {asset.order}<br />
+                  Emir: {asset.order}<br />
                   {asset.trend.includes("İşleniyor") ? `Durum: ${asset.trend}` : `Trend: ${asset.trend}`}
                 </p>
               </div>

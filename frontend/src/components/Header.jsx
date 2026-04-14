@@ -34,10 +34,10 @@ export default function Header() {
           style={{ background: '#00f2ff', color: '#020204' }}
           data-testid="play-store-btn"
         >
-          <Download className="w-3 h-3" /> Play Store
+          <Download className="w-3 h-3" /> İndir
         </a>
         <div
-          className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider opacity-50 cursor-not-allowed"
+          className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-bold tracking-wider opacity-50 cursor-not-allowed"
           style={{ border: '1px solid rgba(30,41,59,0.6)', color: '#64748b' }}
           data-testid="app-store-badge"
         >
@@ -50,7 +50,7 @@ export default function Header() {
         {user && (
           <button
             onClick={logout}
-            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold tracking-wider transition-all hover:opacity-80"
+            className="flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-bold tracking-wider transition-all hover:opacity-80"
             style={{ border: '1px solid rgba(255,0,60,0.4)', color: '#ff003c' }}
             data-testid="logout-btn"
           >
