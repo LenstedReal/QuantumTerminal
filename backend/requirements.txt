@@ -84,6 +84,7 @@ pyflakes==3.4.0
 Pygments==2.20.0
 PyJWT==2.12.1
 pymongo==4.5.0
+pyotp==2.9.0
 pyparsing==3.3.2
 pytest==9.0.3
 python-dateutil==2.9.0.post0
@@ -92,6 +93,7 @@ python-jose==3.5.0
 python-multipart==0.0.24
 pytokens==0.4.1
 PyYAML==6.0.3
+qrcode==8.2
 referencing==0.37.0
 regex==2026.4.4
 requests==2.33.1
@@ -114,8 +116,11 @@ typer==0.24.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2026.1
+ua-parser==1.0.2
+ua-parser-builtins==202603
 uritemplate==4.2.0
 urllib3==2.6.3
+user-agents==2.2.0
 uvicorn==0.25.0
 watchfiles==1.1.1
 websockets==16.0

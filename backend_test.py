@@ -9,8 +9,9 @@ class TradingTerminalAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.failed_tests = []
+        self.session = requests.Session()  # For cookie persistence
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, timeout=30):
+    def run_test(self, name, method, endpoint, expected_status, data=None, timeout=30, use_session=False):
         """Run a single API test"""
         url = f"{self.base_url}/api/{endpoint}" if endpoint else f"{self.base_url}/api"
         headers = {'Content-Type': 'application/json'}
@@ -20,10 +21,11 @@ class TradingTerminalAPITester:
         print(f"   URL: {url}")
         
         try:
+            client = self.session if use_session else requests
             if method == 'GET':
-                response = requests.get(url, headers=headers, timeout=timeout)
+                response = client.get(url, headers=headers, timeout=timeout)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers, timeout=timeout)
+                response = client.post(url, json=data, headers=headers, timeout=timeout)
 
             success = response.status_code == expected_status
             if success:
@@ -128,46 +130,161 @@ class TradingTerminalAPITester:
                 print("   ⚠️  Missing expected global stats fields")
         return success
 
-    def test_system_logs(self):
-        """Test system logs endpoints"""
-        # Test GET logs
-        success_get, logs = self.run_test(
-            "Get System Logs",
-            "GET",
-            "system-logs",
-            200
-        )
-        
-        # Test POST log
-        success_post, new_log = self.run_test(
-            "Add System Log",
+    def test_auth_login(self):
+        """Test admin login with correct credentials"""
+        success, response = self.run_test(
+            "Admin Login",
             "POST",
-            "system-logs?message=Test log entry",
-            200
-        )
-        
-        return success_get and success_post
-
-    def test_status_endpoints(self):
-        """Test status check endpoints"""
-        # Test POST status
-        success_post, status = self.run_test(
-            "Create Status Check",
-            "POST",
-            "status",
+            "auth/login",
             200,
-            data={"client_name": "test_client"}
+            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            use_session=True
+        )
+        if success and isinstance(response, dict):
+            required_fields = ['id', 'email', 'name', 'role', 'email_verified', 'totp_enabled']
+            missing_fields = [field for field in required_fields if field not in response]
+            if not missing_fields and response.get('email') == 'admin@lenstedreal.com':
+                print("   ✅ Admin login successful with correct user data")
+                return True
+            else:
+                print(f"   ⚠️  Missing fields or incorrect email: {missing_fields}")
+        return success
+
+    def test_auth_register(self):
+        """Test user registration"""
+        test_email = f"test_{datetime.now().strftime('%H%M%S')}@test.com"
+        success, response = self.run_test(
+            "User Registration",
+            "POST",
+            "auth/register",
+            200,
+            data={"email": test_email, "password": "TestPass123!", "name": "Test User"}
+        )
+        if success and isinstance(response, dict):
+            if response.get('email') == test_email and 'verification_code_hint' in response:
+                print("   ✅ Registration successful with verification code")
+                return True
+            else:
+                print("   ⚠️  Registration response missing expected fields")
+        return success
+
+    def test_auth_me(self):
+        """Test getting current user (requires login first)"""
+        # First login
+        login_success, _ = self.run_test(
+            "Login for /me test",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            use_session=True
         )
         
-        # Test GET status
-        success_get, statuses = self.run_test(
-            "Get Status Checks",
+        if not login_success:
+            print("   ❌ Login failed, cannot test /me endpoint")
+            return False
+            
+        # Then test /me
+        success, response = self.run_test(
+            "Get Current User (/me)",
             "GET",
-            "status",
+            "auth/me",
+            200,
+            use_session=True
+        )
+        if success and isinstance(response, dict):
+            if response.get('email') == 'admin@lenstedreal.com':
+                print("   ✅ /me endpoint returns correct user data")
+                return True
+            else:
+                print("   ⚠️  /me endpoint returned unexpected user data")
+        return success
+
+    def test_auth_logout(self):
+        """Test logout functionality"""
+        # First login
+        login_success, _ = self.run_test(
+            "Login for logout test",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            use_session=True
+        )
+        
+        if not login_success:
+            print("   ❌ Login failed, cannot test logout")
+            return False
+            
+        # Then logout
+        success, response = self.run_test(
+            "User Logout",
+            "POST",
+            "auth/logout",
+            200,
+            use_session=True
+        )
+        if success and isinstance(response, dict):
+            if 'message' in response and 'Logged out' in response['message']:
+                print("   ✅ Logout successful")
+                return True
+            else:
+                print("   ⚠️  Logout response unexpected")
+        return success
+
+    def test_login_logs(self):
+        """Test login activity logs"""
+        success, response = self.run_test(
+            "Login Activity Logs",
+            "GET",
+            "login-logs",
             200
         )
+        if success and isinstance(response, list):
+            if len(response) > 0:
+                log = response[0]
+                required_fields = ['email', 'ip_address', 'device', 'device_type', 'success', 'timestamp']
+                missing_fields = [field for field in required_fields if field not in log]
+                if not missing_fields:
+                    print(f"   ✅ Found {len(response)} login logs with all required fields")
+                    return True
+                else:
+                    print(f"   ⚠️  Missing fields in login logs: {missing_fields}")
+            else:
+                print("   ⚠️  No login logs found")
+        return success
+
+    def test_2fa_setup(self):
+        """Test 2FA setup endpoint"""
+        # First login
+        login_success, _ = self.run_test(
+            "Login for 2FA setup test",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            use_session=True
+        )
         
-        return success_post and success_get
+        if not login_success:
+            print("   ❌ Login failed, cannot test 2FA setup")
+            return False
+            
+        # Then test 2FA setup
+        success, response = self.run_test(
+            "2FA Setup",
+            "POST",
+            "auth/setup-2fa",
+            200,
+            use_session=True
+        )
+        if success and isinstance(response, dict):
+            if 'secret' in response and 'qr_code' in response:
+                print("   ✅ 2FA setup returns secret and QR code")
+                return True
+            else:
+                print("   ⚠️  2FA setup response missing expected fields")
+        return success
 
 def main():
     print("🚀 LENSTEDREAL Quantum Terminal API Testing")
@@ -178,11 +295,15 @@ def main():
     # Run all tests
     tests = [
         tester.test_root_endpoint,
+        tester.test_auth_login,
+        tester.test_auth_register,
+        tester.test_auth_me,
+        tester.test_auth_logout,
+        tester.test_login_logs,
+        tester.test_2fa_setup,
         tester.test_market_data,
         tester.test_trending,
         tester.test_global_stats,
-        tester.test_system_logs,
-        tester.test_status_endpoints,
     ]
     
     for test in tests:

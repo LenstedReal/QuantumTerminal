@@ -1,130 +1,128 @@
 import React, { useState } from "react";
-import { TrendingUp, TrendingDown, Flame, Loader2, Search } from "lucide-react";
+import { Monitor, Globe, Clock } from "lucide-react";
 
-const formatPrice = (p) => {
-  if (!p) return "--";
-  if (p >= 1) return "$" + p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return "$" + p.toFixed(6);
-};
+export default function AssetIntelligence({ marketData, systemLogs, loginLogs }) {
+  const [tab, setTab] = useState("assets");
 
-const formatMcap = (val) => {
-  if (!val) return "--";
-  if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`;
-  if (val >= 1e9) return `$${(val / 1e9).toFixed(2)}B`;
-  if (val >= 1e6) return `$${(val / 1e6).toFixed(2)}M`;
-  return `$${val.toFixed(0)}`;
-};
+  // Build asset items from real market data + static ones
+  const btc = marketData.find(c => c.symbol === 'btc');
+  const eth = marketData.find(c => c.symbol === 'eth');
 
-function CoinRow({ coin, index }) {
-  const change = coin.price_change_percentage_24h;
-  const isUp = change >= 0;
+  const staticAssets = [
+    { symbol: "NVDA.US", order: "$5.50", trend: "Momentum Yükselişi", status: "GÜÇLÜ AL", statusColor: "#00ff6a" },
+    { symbol: "GOOGL.US", order: "$3.43", trend: "İşleniyor", status: "BEKLEMEDE", statusColor: "#00f2ff" },
+  ];
 
-  return (
-    <div
-      className={`flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/50 transition-colors duration-75 border-b border-zinc-800/30 cursor-pointer ${coin._priceDir === 'up' ? 'flash-green' : coin._priceDir === 'down' ? 'flash-red' : ''}`}
-      data-testid={`asset-row-${coin.id}`}
-    >
-      <span className="text-[10px] text-zinc-600 font-mono w-4 text-right">{index + 1}</span>
-      <img src={coin.image} alt={coin.symbol} className="w-5 h-5 rounded-full" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-white uppercase">{coin.symbol}</span>
-          <span className="text-[10px] text-zinc-500 truncate">{coin.name}</span>
-        </div>
-        <div className="text-[10px] text-zinc-500 font-mono">{formatMcap(coin.market_cap)}</div>
-      </div>
-      <div className="text-right">
-        <div className="text-xs font-mono text-white">{formatPrice(coin.current_price)}</div>
-        <div className={`text-[10px] font-mono flex items-center justify-end gap-0.5 ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
-          {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
-          {isUp ? "+" : ""}{change?.toFixed(2)}%
-        </div>
-      </div>
-    </div>
-  );
-}
+  const liveAssets = [];
+  if (btc) liveAssets.push({
+    symbol: "BTC/USD", order: `$${btc.current_price?.toLocaleString()}`,
+    trend: btc.price_change_percentage_24h >= 2 ? "Momentum Yükselişi" : btc.price_change_percentage_24h >= 0 ? "Birikim Fazı" : "Dağıtım Fazı",
+    status: btc.price_change_percentage_24h >= 0 ? "YÜKSELİŞ" : "DÜŞÜŞ",
+    statusColor: btc.price_change_percentage_24h >= 0 ? "#00ff6a" : "#ff003c",
+  });
+  if (eth) liveAssets.push({
+    symbol: "ETH/USD", order: `$${eth.current_price?.toLocaleString()}`,
+    trend: eth.price_change_percentage_24h >= 2 ? "Kırılma Sinyali" : "Konsolidasyon",
+    status: eth.price_change_percentage_24h >= 0 ? "YÜKSELİŞ" : "DÜŞÜŞ",
+    statusColor: eth.price_change_percentage_24h >= 0 ? "#00ff6a" : "#ff003c",
+  });
 
-function TrendingItem({ item }) {
-  const coin = item.item;
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-800/50 transition-colors duration-75" data-testid={`trending-${coin.id}`}>
-      <span className="text-[10px] text-orange-400 font-mono">#{coin.market_cap_rank || '--'}</span>
-      <img src={coin.small} alt={coin.symbol} className="w-4 h-4 rounded-full" />
-      <span className="text-[11px] text-white font-medium uppercase">{coin.symbol}</span>
-      <span className="text-[10px] text-zinc-500 truncate flex-1">{coin.name}</span>
-    </div>
-  );
-}
-
-export default function AssetIntelligence({ marketData, trending, loading }) {
-  const [tab, setTab] = useState("markets");
-  const [search, setSearch] = useState("");
-
-  const filteredData = marketData.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.symbol.toLowerCase().includes(search.toLowerCase())
-  );
+  const allAssets = [...staticAssets, ...liveAssets];
 
   return (
     <div className="flex flex-col h-full" data-testid="asset-intelligence">
-      {/* Panel Header */}
-      <div className="px-3 py-2 border-b border-zinc-800 flex items-center justify-between shrink-0">
-        <div className="text-[10px] font-bold tracking-[0.15em] text-zinc-400 uppercase">
-          Asset Intelligence
-        </div>
-        <div className="text-[9px] text-zinc-600 font-mono">01</div>
+      {/* Module Header */}
+      <div className="px-4 py-2.5 flex justify-between items-center shrink-0" style={{
+        background: 'rgba(15,23,42,0.5)', borderBottom: '1px solid rgba(30,41,59,0.6)'
+      }}>
+        <span className="text-[11px] uppercase font-bold tracking-wider" style={{ color: '#00f2ff' }}>
+          Varlık İstihbaratı
+        </span>
+        <span className="text-[11px] font-bold" style={{ color: '#00f2ff' }}>01</span>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-zinc-800 shrink-0">
-        <button
-          onClick={() => setTab("markets")}
-          className={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-colors duration-75 ${
-            tab === "markets" ? "text-blue-400 border-b border-blue-400 bg-blue-400/5" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-          data-testid="tab-markets"
-        >
-          MARKETS
-        </button>
-        <button
-          onClick={() => setTab("trending")}
-          className={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-colors duration-75 flex items-center justify-center gap-1 ${
-            tab === "trending" ? "text-orange-400 border-b border-orange-400 bg-orange-400/5" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-          data-testid="tab-trending"
-        >
-          <Flame className="w-3 h-3" /> TRENDING
-        </button>
+      <div className="flex shrink-0" style={{ borderBottom: '1px solid rgba(30,41,59,0.6)' }}>
+        {[
+          { id: "assets", label: "VARLIKLAR" },
+          { id: "activity", label: "AKTİVİTE KAYDI" },
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="flex-1 py-2 text-[9px] font-bold tracking-wider transition-all"
+            style={{
+              color: tab === t.id ? '#00f2ff' : '#64748b',
+              borderBottom: tab === t.id ? '1px solid #00f2ff' : '1px solid transparent',
+              background: tab === t.id ? 'rgba(0,242,255,0.03)' : 'transparent'
+            }}
+            data-testid={`tab-${t.id}`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-
-      {/* Search */}
-      {tab === "markets" && (
-        <div className="px-3 py-2 border-b border-zinc-800 shrink-0">
-          <div className="flex items-center gap-2 bg-zinc-900 rounded px-2 py-1">
-            <Search className="w-3 h-3 text-zinc-600" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search assets..."
-              className="bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none flex-1 font-mono"
-              data-testid="asset-search-input"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {loading ? (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
-          </div>
-        ) : tab === "markets" ? (
-          filteredData.map((coin, i) => <CoinRow key={coin.id} coin={coin} index={i} />)
-        ) : (
-          trending.slice(0, 10).map((item, i) => <TrendingItem key={i} item={item} />)
+        {tab === "assets" && (
+          <>
+            {allAssets.map((asset, i) => (
+              <div key={i} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(30,41,59,0.6)', background: 'rgba(255,255,255,0.01)' }} data-testid={`asset-item-${i}`}>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-white" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{asset.symbol}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{
+                    color: asset.statusColor,
+                    border: `1px solid ${asset.statusColor}`,
+                    background: `${asset.statusColor}10`
+                  }} data-testid={`asset-badge-${i}`}>
+                    {asset.status}
+                  </span>
+                </div>
+                <p className="text-[10px] mt-1" style={{ color: '#64748b' }}>
+                  Order: {asset.order}<br />
+                  {asset.trend.includes("İşleniyor") ? `Durum: ${asset.trend}` : `Trend: ${asset.trend}`}
+                </p>
+              </div>
+            ))}
+          </>
         )}
+
+        {tab === "activity" && (
+          <div className="px-2 py-1">
+            {loginLogs.length === 0 && (
+              <div className="text-[10px] py-4 text-center" style={{ color: '#64748b' }}>Henüz giriş aktivitesi yok</div>
+            )}
+            {loginLogs.map((log, i) => (
+              <div key={i} className="py-2 px-2 text-[10px]" style={{ borderBottom: '1px solid rgba(30,41,59,0.3)', fontFamily: "'JetBrains Mono', monospace" }} data-testid={`login-log-${i}`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Monitor className="w-2.5 h-2.5" style={{ color: log.success ? '#00ff6a' : '#ff003c' }} />
+                  <span style={{ color: log.success ? '#00ff6a' : '#ff003c' }}>{log.success ? "BAŞARILI" : "BAŞARISIZ"}</span>
+                  <span style={{ color: '#64748b' }}>{log.email}</span>
+                </div>
+                <div className="flex items-center gap-3 ml-4" style={{ color: '#475569' }}>
+                  <span><Globe className="w-2.5 h-2.5 inline mr-0.5" />{log.ip_address}</span>
+                  <span>{log.device_type} - {log.device}</span>
+                </div>
+                <div className="ml-4 mt-0.5" style={{ color: '#374151' }}>
+                  <Clock className="w-2.5 h-2.5 inline mr-0.5" />{new Date(log.timestamp).toLocaleString("tr-TR")}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* System Log Box */}
+      <div className="shrink-0" style={{ background: '#000', borderTop: '1px solid rgba(30,41,59,0.6)', height: '100px' }} data-testid="system-log-box">
+        <div className="h-full overflow-y-auto px-3 py-2">
+          {systemLogs.map(log => (
+            <div key={log.id} className="text-[10px] leading-relaxed" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#64748b' }}>
+              <span style={{ color: '#00f2ff', marginRight: '5px' }}>[{log.time}]</span>
+              {log.message}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

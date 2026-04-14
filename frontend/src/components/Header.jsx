@@ -1,76 +1,62 @@
 import React from "react";
-import { Activity, Download, Smartphone } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut, Download, Smartphone } from "lucide-react";
 
-const formatMarketCap = (val) => {
-  if (!val) return "--";
-  const t = val / 1e12;
-  return `$${t.toFixed(2)}T`;
-};
-
-export default function Header({ globalStats }) {
-  const totalMcap = globalStats?.total_market_cap?.usd;
-  const mcapChange = globalStats?.market_cap_change_percentage_24h_usd;
-  const btcDom = globalStats?.market_cap_percentage?.btc;
+export default function Header() {
+  const { user, logout } = useAuth();
 
   return (
-    <header className="h-14 flex items-center justify-between px-4 bg-[#121214] border-b border-zinc-800 z-30 shrink-0" data-testid="header">
+    <header className="h-[60px] px-4 flex justify-between items-center shrink-0 z-20" style={{
+      background: 'rgba(10,12,18,0.96)',
+      borderBottom: '1px solid #00f2ff',
+      backdropFilter: 'blur(8px)'
+    }} data-testid="header">
       {/* Brand */}
-      <div className="flex items-center gap-3" data-testid="header-brand">
-        <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
-          <Activity className="w-4 h-4 text-white" />
-        </div>
-        <div className="hidden sm:block">
-          <div className="text-sm font-bold tracking-widest text-white leading-none">
-            LENSTEDREAL
-          </div>
-          <div className="text-[10px] tracking-[0.2em] text-zinc-500 font-medium">
-            QUANTUM TERMINAL V10
-          </div>
-        </div>
-        <div className="sm:hidden text-xs font-bold tracking-wider text-white">LTR</div>
+      <div className="font-bold tracking-[2px] text-sm" style={{ fontFamily: "'JetBrains Mono', monospace" }} data-testid="header-brand">
+        LENSTEDREAL <span style={{ color: '#00f2ff', textShadow: '0 0 10px rgba(0,242,255,0.3)' }}>SYSTEMS</span>
       </div>
 
-      {/* Global Stats - Desktop */}
-      <div className="hidden md:flex items-center gap-6 text-xs font-mono" data-testid="global-stats">
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-500">MCAP</span>
-          <span className="text-white">{formatMarketCap(totalMcap)}</span>
-          {mcapChange !== undefined && (
-            <span className={mcapChange >= 0 ? "text-emerald-400" : "text-red-400"}>
-              {mcapChange >= 0 ? "+" : ""}{mcapChange?.toFixed(2)}%
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-500">BTC.D</span>
-          <span className="text-white">{btcDom?.toFixed(1)}%</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-pulse" />
-          <span className="text-emerald-400 text-[10px] tracking-wider">LIVE</span>
+      {/* Status */}
+      <div className="hidden sm:flex items-center gap-4">
+        <div className="blink text-xs" style={{ color: '#00ff6a' }} data-testid="sync-status">
+          ● QUANTUM_SYNC_OK
         </div>
       </div>
 
-      {/* Download Badges */}
-      <div className="flex items-center gap-2" data-testid="download-badges">
+      {/* Right Side */}
+      <div className="flex items-center gap-2">
+        {/* Download Badges */}
         <a
           href="https://play.google.com/store"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold rounded transition-colors duration-150"
+          className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider transition-all hover:opacity-80"
+          style={{ background: '#00f2ff', color: '#020204' }}
           data-testid="play-store-btn"
         >
-          <Download className="w-3 h-3" />
-          <span className="hidden sm:inline">Play Store</span>
+          <Download className="w-3 h-3" /> Play Store
         </a>
         <div
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-500 text-[11px] font-semibold rounded cursor-not-allowed opacity-70"
+          className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold tracking-wider opacity-50 cursor-not-allowed"
+          style={{ border: '1px solid rgba(30,41,59,0.6)', color: '#64748b' }}
           data-testid="app-store-badge"
         >
-          <Smartphone className="w-3 h-3" />
-          <span className="hidden sm:inline">App Store</span>
-          <span className="text-[9px] text-zinc-600 ml-1">YAKINDA</span>
+          <Smartphone className="w-3 h-3" /> App Store <span className="text-[8px] ml-1">YAKINDA</span>
         </div>
+
+        <div className="text-[10px] hidden md:block" style={{ color: '#64748b' }} data-testid="version-info">V10_PRO_NODE</div>
+
+        {/* User & Logout */}
+        {user && (
+          <button
+            onClick={logout}
+            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold tracking-wider transition-all hover:opacity-80"
+            style={{ border: '1px solid rgba(255,0,60,0.4)', color: '#ff003c' }}
+            data-testid="logout-btn"
+          >
+            <LogOut className="w-3 h-3" /> ÇIKIŞ
+          </button>
+        )}
       </div>
     </header>
   );

@@ -2,143 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 6% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 6% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 4% 14%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 217 91% 60%;
-    --chart-1: 160 60% 45%;
-    --chart-2: 0 72% 51%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 280 65% 60%;
-    --radius: 0.25rem;
-  }
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #020204;
+  --panel: rgba(10, 12, 18, 0.96);
+  --accent: #00f2ff;
+  --accent-glow: rgba(0, 242, 255, 0.3);
+  --danger: #ff003c;
+  --success: #00ff6a;
+  --text-main: #cbd5e1;
+  --text-dim: #64748b;
+  --border: rgba(30, 41, 59, 0.6);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border-color: hsl(var(--border));
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-  background: #09090B;
+  background: #020204;
   color-scheme: dark;
 }
 
 body {
-  background: #09090B;
-  color: #FAFAFA;
-  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  background: radial-gradient(circle at center, #0a0a15 0%, #020204 100%);
+  color: var(--text-main);
+  font-family: 'JetBrains Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
   height: 100dvh;
+  overflow: hidden;
 }
 
 #root {
   height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: #09090B;
-}
-::-webkit-scrollbar-thumb {
-  background: #27272A;
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3B82F6;
+/* Scanline overlay */
+.scanline::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.25;
 }
 
-/* JetBrains Mono for data */
-.font-mono {
-  font-family: 'JetBrains Mono', monospace !important;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #020204; }
+::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* Ticker animation */
+/* Blink animation */
+@keyframes blinker { 50% { opacity: 0.3; } }
+.blink { animation: blinker 2s infinite; }
+
+/* Pulse glow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0,242,255,0.2); }
+  50% { box-shadow: 0 0 15px rgba(0,242,255,0.5); }
+}
+.pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+/* Ticker scroll */
 @keyframes ticker-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+.ticker-animate { animation: ticker-scroll 35s linear infinite; }
 
-.ticker-animate {
-  animation: ticker-scroll 40s linear infinite;
-}
-
-/* Pulse for live indicator */
-@keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.live-pulse {
-  animation: live-pulse 2s ease-in-out infinite;
-}
-
-/* Scanline overlay */
-.scanline-overlay::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
-  z-index: 50;
-}
-
-/* Flash animations for price updates */
+/* Flash animations */
 @keyframes flash-green {
-  0% { background-color: rgba(16, 185, 129, 0.3); }
+  0% { background-color: rgba(0, 255, 106, 0.2); }
   100% { background-color: transparent; }
 }
 @keyframes flash-red {
-  0% { background-color: rgba(239, 68, 68, 0.3); }
+  0% { background-color: rgba(255, 0, 60, 0.2); }
   100% { background-color: transparent; }
 }
-
 .flash-green { animation: flash-green 0.5s ease-out; }
 .flash-red { animation: flash-red 0.5s ease-out; }
 
 /* Mobile responsive */
-@media (max-width: 1024px) {
-  body {
-    overflow-y: auto;
-  }
+@media (max-width: 1100px) {
+  body, #root { overflow-y: auto; height: auto; min-height: 100dvh; }
 }
 
 @layer base {
-  [data-debug-wrapper="true"] {
-    display: contents !important;
-  }
+  [data-debug-wrapper="true"] { display: contents !important; }
 }
