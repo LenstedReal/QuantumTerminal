@@ -7,29 +7,14 @@ import Dashboard from "@/components/Dashboard";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: '#020204' }}>
-        <div className="text-center">
-          <div className="text-[#00f2ff] text-sm font-mono tracking-widest blink">KUANTUM_SENKRONİZASYON...</div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
 function AppRoutes() {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: '#020204' }}>
-        <div className="text-[#00f2ff] text-sm font-mono tracking-widest blink">KUANTUM TERMİNAL BAŞLATILIYOR...</div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return (
     <Routes>
