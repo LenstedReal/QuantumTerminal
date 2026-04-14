@@ -7,16 +7,12 @@ import ChartPanel from "@/components/ChartPanel";
 import RightPanel from "@/components/RightPanel";
 import Footer from "@/components/Footer";
 
-const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : null;
+const CG = "https://api.coingecko.com/api/v3";
 
 export default function Dashboard() {
   const [marketData, setMarketData] = useState([]);
   const [globalStats, setGlobalStats] = useState(null);
-  const [loginLogs, setLoginLogs] = useState([]);
-  const [systemLogs, setSystemLogs] = useState([
-    { id: 1, time: "14:09:33", message: "Kimlik doğrulama başarılı." },
-    { id: 2, time: "14:09:35", message: "Portföy senkronizasyonu tamamlandı." },
-  ]);
+  const [systemLogs, setSystemLogs] = useState([]);
 
   const addLog = useCallback((msg) => {
     const t = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -24,17 +20,14 @@ export default function Dashboard() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!API) return;
     try {
       addLog("Kuantum veri senkronizasyonu başlatıldı...");
-      const [m, g, l] = await Promise.all([
-        axios.get(`${API}/market-data`, { withCredentials: true }).catch(() => ({ data: [] })),
-        axios.get(`${API}/global-stats`, { withCredentials: true }).catch(() => ({ data: { data: {} } })),
-        axios.get(`${API}/login-logs`, { withCredentials: true }).catch(() => ({ data: [] })),
+      const [m, g] = await Promise.all([
+        axios.get(`${CG}/coins/markets`, { params: { vs_currency: "usd", order: "market_cap_desc", per_page: 20, page: 1, sparkline: true, price_change_percentage: "1h,24h,7d" }, timeout: 10000 }).catch(() => ({ data: [] })),
+        axios.get(`${CG}/global`, { timeout: 10000 }).catch(() => ({ data: { data: {} } })),
       ]);
       setMarketData(m.data || []);
       setGlobalStats(g.data?.data || null);
-      setLoginLogs(l.data || []);
       addLog(`Piyasa senkronizasyonu tamamlandı. ${(m.data || []).length} varlık yüklendi.`);
     } catch (e) {
       addLog(`Senkronizasyon hatası: ${e.message}`);
@@ -55,7 +48,7 @@ export default function Dashboard() {
       <TickerBar marketData={marketData} />
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-[2px] overflow-auto lg:overflow-hidden" style={{ background: 'rgba(30,41,59,0.2)' }} data-testid="terminal-grid">
         <section className="flex flex-col overflow-hidden lg:order-1 order-2" style={{ background: 'rgba(7,10,16,0.8)' }}>
-          <AssetIntelligence marketData={marketData} systemLogs={systemLogs} loginLogs={loginLogs} />
+          <AssetIntelligence marketData={marketData} systemLogs={systemLogs} loginLogs={[]} />
         </section>
         <section className="flex flex-col overflow-hidden lg:order-2 order-1 min-h-[55vh] lg:min-h-0" style={{ background: 'rgba(7,10,16,0.8)' }}>
           <ChartPanel />
