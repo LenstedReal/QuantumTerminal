@@ -3,7 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Shield, Mail, Lock, User, AlertTriangle, Check, X } from "lucide-react";
 import axios from "axios";
 
-const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : null;
+const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
+const API = BACKEND ? `${BACKEND}/api` : null;
 
 function PasswordStrength({ password }) {
   const checks = [
@@ -56,6 +57,7 @@ export default function AuthPage() {
       if (e === "discord_failed") setError("Discord girişi başarısız. Tekrar deneyin.");
       if (e === "discord_state") setError("Güvenlik doğrulaması başarısız.");
       if (e === "discord_config") setError("Discord yapılandırması tamamlanmadı.");
+      if (e === "discord_2fa") setError("Bu hesapta 2FA açık. Lütfen e-posta ve parola ile giriş yapın.");
     } catch {}
   }, []);
 
@@ -97,7 +99,10 @@ export default function AuthPage() {
     setDiscordLoading(true); setError("");
     try {
       const { data } = await axios.get(`${API}/auth/discord/url`, { withCredentials: true });
-      window.location.href = data.url;
+      // Only follow redirects to Discord's own OAuth endpoint.
+      const target = new URL(data?.url || "", window.location.href);
+      if (target.protocol !== "https:" || !["discord.com", "discordapp.com"].includes(target.hostname)) throw new Error("bad redirect");
+      window.location.href = target.toString();
     } catch (e) {
       setError(typeof e.response?.data?.detail === 'string' ? e.response.data.detail : "Discord girişi kullanılamıyor.");
       setDiscordLoading(false);

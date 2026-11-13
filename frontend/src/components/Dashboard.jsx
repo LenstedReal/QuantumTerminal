@@ -8,6 +8,10 @@ import RightPanel from "@/components/RightPanel";
 import Footer from "@/components/Footer";
 
 const CG = "https://api.coingecko.com/api/v3";
+// Prefer the backend proxy (cached, rate-limit tolerant); fall back to CoinGecko directly
+// only when REACT_APP_BACKEND_URL is not configured (avoids "undefined/api").
+const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
+const API = BACKEND ? `${BACKEND}/api` : null;
 
 export default function Dashboard() {
   const [marketData, setMarketData] = useState([]);
@@ -22,13 +26,23 @@ export default function Dashboard() {
   const fetchData = useCallback(async () => {
     try {
       addLog("Kuantum veri senkronizasyonu başlatıldı...");
+      const marketsReq = API
+        ? axios.get(`${API}/market-data`, { timeout: 15000 })
+        : axios.get(`${CG}/coins/markets`, { params: { vs_currency: "usd", order: "market_cap_desc", per_page: 20, page: 1, sparkline: true, price_change_percentage: "1h,24h,7d" }, timeout: 10000 });
+      const globalReq = API
+        ? axios.get(`${API}/global-stats`, { timeout: 15000 })
+        : axios.get(`${CG}/global`, { timeout: 10000 });
       const [m, g] = await Promise.all([
-        axios.get(`${CG}/coins/markets`, { params: { vs_currency: "usd", order: "market_cap_desc", per_page: 20, page: 1, sparkline: true, price_change_percentage: "1h,24h,7d" }, timeout: 10000 }).catch(() => ({ data: [] })),
-        axios.get(`${CG}/global`, { timeout: 10000 }).catch(() => ({ data: { data: {} } })),
+        marketsReq.catch(() => ({ data: null })),
+        globalReq.catch(() => ({ data: { data: {} } })),
       ]);
-      setMarketData(m.data || []);
-      setGlobalStats(g.data?.data || null);
-      addLog(`Piyasa senkronizasyonu tamamlandı. ${(m.data || []).length} varlık yüklendi.`);
+      const list = Array.isArray(m.data) ? m.data : null;
+      // On a 429/failed refresh keep the last good data instead of blanking the UI.
+      if (list && list.length) setMarketData(list);
+      if (g.data?.data && Object.keys(g.data.data).length) setGlobalStats(g.data.data);
+      addLog(list && list.length
+        ? `Piyasa senkronizasyonu tamamlandı. ${list.length} varlık yüklendi.`
+        : "Piyasa verisi alınamadı (limit/ağ). Önceki veriler korunuyor.");
     } catch (e) {
       addLog(`Senkronizasyon hatası: ${e.message}`);
     }

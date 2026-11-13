@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { Monitor, Globe, Clock } from "lucide-react";
 
-export default function AssetIntelligence({ marketData, systemLogs, loginLogs }) {
+export default function AssetIntelligence({ marketData = [], systemLogs = [], loginLogs = [] }) {
   const [tab, setTab] = useState("assets");
 
   // Build asset items from real market data + static ones
-  const btc = marketData.find(c => c.symbol === 'btc');
-  const eth = marketData.find(c => c.symbol === 'eth');
+  const list = Array.isArray(marketData) ? marketData : [];
+  const btc = list.find(c => c?.symbol === 'btc');
+  const eth = list.find(c => c?.symbol === 'eth');
+  const fmt = (p) => (typeof p === "number" ? p.toLocaleString("en-US") : "--");
 
   const staticAssets = [
     { symbol: "NVDA.US", order: "$5.50", trend: "Momentum Yükselişi", status: "GÜÇLÜ AL", statusColor: "#00ff6a" },
@@ -15,13 +17,13 @@ export default function AssetIntelligence({ marketData, systemLogs, loginLogs })
 
   const liveAssets = [];
   if (btc) liveAssets.push({
-    symbol: "BTC/USD", order: `$${btc.current_price?.toLocaleString()}`,
+    symbol: "BTC/USD", order: `$${fmt(btc.current_price)}`,
     trend: btc.price_change_percentage_24h >= 2 ? "Momentum Yükselişi" : btc.price_change_percentage_24h >= 0 ? "Birikim Fazı" : "Dağıtım Fazı",
     status: btc.price_change_percentage_24h >= 0 ? "YÜKSELİŞ" : "DÜŞÜŞ",
     statusColor: btc.price_change_percentage_24h >= 0 ? "#00ff6a" : "#ff003c",
   });
   if (eth) liveAssets.push({
-    symbol: "ETH/USD", order: `$${eth.current_price?.toLocaleString()}`,
+    symbol: "ETH/USD", order: `$${fmt(eth.current_price)}`,
     trend: eth.price_change_percentage_24h >= 2 ? "Kırılma Sinyali" : "Konsolidasyon",
     status: eth.price_change_percentage_24h >= 0 ? "YÜKSELİŞ" : "DÜŞÜŞ",
     statusColor: eth.price_change_percentage_24h >= 0 ? "#00ff6a" : "#ff003c",

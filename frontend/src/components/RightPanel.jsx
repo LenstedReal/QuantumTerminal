@@ -65,6 +65,9 @@ function TVTechnicalAnalysis() {
     container.appendChild(widgetDiv);
     container.appendChild(script);
     ref.current.appendChild(container);
+    const host = ref.current;
+    // Remove the widget (and its iframe) on unmount / symbol change so widgets never stack.
+    return () => { host.innerHTML = ""; };
   }, []);
 
   return <div ref={ref} style={{ height: "100%" }} data-testid="tv-technical-analysis" />;
@@ -102,6 +105,9 @@ function TVScreener() {
     container.appendChild(widgetDiv);
     container.appendChild(script);
     ref.current.appendChild(container);
+    const host = ref.current;
+    // Remove the widget (and its iframe) on unmount / symbol change so widgets never stack.
+    return () => { host.innerHTML = ""; };
   }, []);
 
   return <div ref={ref} style={{ height: "100%" }} data-testid="tv-screener" />;

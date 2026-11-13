@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const BACKEND = process.env.REACT_APP_BACKEND_URL || "";
+const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
 const API = BACKEND ? `${BACKEND}/api` : null;
 const AuthContext = createContext(null);
 
@@ -24,8 +24,16 @@ export function AuthProvider({ children }) {
       return;
     }
     try {
-      const { data } = await axios.get(`${API}/auth/me`, { withCredentials: true, timeout: 5000 });
-      setUser(data);
+      let res;
+      try {
+        res = await axios.get(`${API}/auth/me`, { withCredentials: true, timeout: 5000 });
+      } catch (err) {
+        // Access token lives 30 min; try the refresh cookie once before logging the user out.
+        if (err.response?.status !== 401) throw err;
+        await axios.post(`${API}/auth/refresh`, {}, { withCredentials: true, timeout: 5000 });
+        res = await axios.get(`${API}/auth/me`, { withCredentials: true, timeout: 5000 });
+      }
+      setUser(res.data);
     } catch {
       setUser(false);
     } finally {

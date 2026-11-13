@@ -48,6 +48,9 @@ export default function ChartPanel() {
     container.appendChild(widgetDiv);
     container.appendChild(script);
     chartRef.current.appendChild(container);
+    const host = chartRef.current;
+    // Remove the widget (and its iframe) on unmount / symbol change so widgets never stack.
+    return () => { host.innerHTML = ""; };
   }, [symbol]);
 
   return (
@@ -56,8 +59,8 @@ export default function ChartPanel() {
       <div className="px-4 py-2.5 flex justify-between items-center shrink-0" style={{
         background: 'rgba(15,23,42,0.5)', borderBottom: '1px solid rgba(30,41,59,0.6)'
       }}>
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] uppercase font-bold tracking-wider" style={{ color: '#00f2ff' }}>
+        <div className="flex items-center gap-3 min-w-0 overflow-x-auto">
+          <span className="text-[11px] uppercase font-bold tracking-wider whitespace-nowrap" style={{ color: '#00f2ff' }}>
             Quantum Core Chart
           </span>
           <div className="flex items-center gap-1">

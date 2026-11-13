@@ -1,10 +1,11 @@
+import os
 import requests
 import sys
 import json
 from datetime import datetime
 
 class TradingTerminalAPITester:
-    def __init__(self, base_url="https://trading-core-4.preview.emergentagent.com"):
+    def __init__(self, base_url=os.environ.get("QT_BASE_URL", "http://localhost:8001")):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
@@ -137,7 +138,7 @@ class TradingTerminalAPITester:
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            data={"email": "admin@lenstedreal.com", "password": os.environ.get("QT_ADMIN_PASSWORD", "")},
             use_session=True
         )
         if success and isinstance(response, dict):
@@ -176,7 +177,7 @@ class TradingTerminalAPITester:
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            data={"email": "admin@lenstedreal.com", "password": os.environ.get("QT_ADMIN_PASSWORD", "")},
             use_session=True
         )
         
@@ -208,7 +209,7 @@ class TradingTerminalAPITester:
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            data={"email": "admin@lenstedreal.com", "password": os.environ.get("QT_ADMIN_PASSWORD", "")},
             use_session=True
         )
         
@@ -262,7 +263,7 @@ class TradingTerminalAPITester:
             "POST",
             "auth/login",
             200,
-            data={"email": "admin@lenstedreal.com", "password": "LenstedAdmin2026!"},
+            data={"email": "admin@lenstedreal.com", "password": os.environ.get("QT_ADMIN_PASSWORD", "")},
             use_session=True
         )
         
