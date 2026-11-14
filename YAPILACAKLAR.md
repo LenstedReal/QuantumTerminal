@@ -1,12 +1,14 @@
 # Yapılacaklar (QuantumTerminal)
 
-14 Kasım 2026 notu. Altyapı ve güvenlik düzeltmeleri yapıldı ("Hata ve güvenlik düzeltmeleri" commit'i); **arayüz değişmedi**.
+14 Kasım 2026 notu. Altyapı ve güvenlik düzeltmeleri yapıldı ("Hata ve güvenlik düzeltmeleri" commit'i). Arayüz yenilendi ("Yeni arayüz" commit'i).
 
-## Sıradaki iş: arayüz
-- [ ] Sahibiyle konuşulacak: web sitesinde neler istendiği, neler istenmediği (ilk iş).
-- [ ] Görsel yenileme: daha güçlü neon terminal havası, açılış animasyonu, fiyat değişiminde yanıp sönen rakamlar, akıcı geçişler, telefonda düzgün düzen.
+## Arayüz
+- [x] Sahibinin isteği: Play Store / App Store düğmeleri ve Instagram adresi yok; altta yalnızca "by lenstedreal".
+- [x] Yeni görünüm: cam paneller, açılış animasyonu, fiyat değişiminde yanıp sönen rakamlar, telefonda düzgün düzen.
+- [x] Sahte "GÜÇLÜ AL" sinyalleri kaldırıldı. "Kuantum analiz" artık fiyat verisinden hesaplanıyor (ortalama farkı, 7 gün, 24 saat, RSI) ve nasıl hesaplandığını gösteriyor.
+- [x] "Yapay zekâ hata yapabilir, yatırım tavsiyesi değildir" notu eklendi.
 - [ ] Giriş ekranı: `App.js` sadece paneli gösteriyor, giriş/2FA ekranı hiç bağlı değil. Giriş zorunlu mu olacak, panel herkese açık mı kalacak? Karar verilecek.
-- [ ] "İndir" düğmesi Play Store ana sayfasına gidiyor; doğru uygulama adresi konacak.
+- Not: `design_guidelines.json` ve `memory/PRD.md` eski tasarım notları; Play Store düğmesinden bahsediyorlar ama sitede gösterilmiyorlar.
 
 ## Sahibinin yapması gerekenler
 - [ ] Eski admin şifresi depo geçmişinde duruyor: **şifreyi değiştir**. Yeni şifre sunucuda `ADMIN_PASSWORD` ortam değişkeni olarak verilir.

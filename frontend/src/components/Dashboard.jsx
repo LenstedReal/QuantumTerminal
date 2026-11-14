@@ -1,75 +1,88 @@
-import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import "@/styles/quantum.css";
+import useMarket from "@/hooks/useMarket";
+import { STOCKS } from "@/lib/market";
+import { clockTR, safeStore } from "@/components/qt/ui";
 import Header from "@/components/Header";
 import TickerBar from "@/components/TickerBar";
-import AssetIntelligence from "@/components/AssetIntelligence";
+import GlobalStats from "@/components/GlobalStats";
+import MarketList from "@/components/MarketList";
 import ChartPanel from "@/components/ChartPanel";
+import AssetIntelligence from "@/components/AssetIntelligence";
 import RightPanel from "@/components/RightPanel";
 import Footer from "@/components/Footer";
 
-const CG = "https://api.coingecko.com/api/v3";
-// Prefer the backend proxy (cached, rate-limit tolerant); fall back to CoinGecko directly
-// only when REACT_APP_BACKEND_URL is not configured (avoids "undefined/api").
-const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
-const API = BACKEND ? `${BACKEND}/api` : null;
+const initialId = () => {
+  const h = typeof window !== "undefined" ? decodeURIComponent(window.location.hash.slice(1)) : "";
+  if (/^[a-z0-9-]{2,60}$/.test(h)) return h;
+  const saved = safeStore("qt-selected");
+  return saved && /^[a-z0-9-]{2,60}$/.test(saved) ? saved : "bitcoin";
+};
 
 export default function Dashboard() {
-  const [marketData, setMarketData] = useState([]);
-  const [globalStats, setGlobalStats] = useState(null);
-  const [systemLogs, setSystemLogs] = useState([]);
+  const { coins, global, status, updatedAt, ticks, reload } = useMarket();
+  const [selectedId, setSelectedId] = useState(initialId);
+  const [tab, setTab] = useState("tech");
+  const stamp = updatedAt ? updatedAt.getTime() : 0;
 
-  const addLog = useCallback((msg) => {
-    const t = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    setSystemLogs(p => [{ id: Date.now() + Math.random(), time: t, message: msg }, ...p].slice(0, 50));
+  const asset = useMemo(() => {
+    const stock = STOCKS.find((s) => s.id === selectedId);
+    if (stock) return { ...stock, kind: "stock" };
+    const coin = coins.find((c) => c.id === selectedId);
+    if (coin) return coin;
+    return coins[0] || null; // unknown id (or not in the top 20 any more): fall back to the leader
+  }, [coins, selectedId]);
+
+  const pick = useCallback((id) => {
+    setSelectedId(id);
+    safeStore("qt-selected", id);
+    try { window.history.replaceState(null, "", `#${id}`); } catch (e) { /* ignore */ }
+    if (id.startsWith("stock-")) setTab("tech");
+    const main = document.querySelector(".qt-center");
+    if (main && window.matchMedia && window.matchMedia("(max-width: 900px)").matches) main.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const fetchData = useCallback(async () => {
-    try {
-      addLog("Kuantum veri senkronizasyonu başlatıldı...");
-      const marketsReq = API
-        ? axios.get(`${API}/market-data`, { timeout: 15000 })
-        : axios.get(`${CG}/coins/markets`, { params: { vs_currency: "usd", order: "market_cap_desc", per_page: 20, page: 1, sparkline: true, price_change_percentage: "1h,24h,7d" }, timeout: 10000 });
-      const globalReq = API
-        ? axios.get(`${API}/global-stats`, { timeout: 15000 })
-        : axios.get(`${CG}/global`, { timeout: 10000 });
-      const [m, g] = await Promise.all([
-        marketsReq.catch(() => ({ data: null })),
-        globalReq.catch(() => ({ data: { data: {} } })),
-      ]);
-      const list = Array.isArray(m.data) ? m.data : null;
-      // On a 429/failed refresh keep the last good data instead of blanking the UI.
-      if (list && list.length) setMarketData(list);
-      if (g.data?.data && Object.keys(g.data.data).length) setGlobalStats(g.data.data);
-      addLog(list && list.length
-        ? `Piyasa senkronizasyonu tamamlandı. ${list.length} varlık yüklendi.`
-        : "Piyasa verisi alınamadı (limit/ağ). Önceki veriler korunuyor.");
-    } catch (e) {
-      addLog(`Senkronizasyon hatası: ${e.message}`);
-    }
-  }, [addLog]);
+  useEffect(() => {
+    const onHash = () => { const h = decodeURIComponent(window.location.hash.slice(1)); if (/^[a-z0-9-]{2,60}$/.test(h)) setSelectedId(h); };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   useEffect(() => {
-    addLog("LENSTEDREAL Quantum Terminal V10 başlatılıyor...");
-    addLog("Güvenli kuantum bağlantısı kuruluyor...");
-    fetchData();
-    const iv = setInterval(fetchData, 30000);
-    return () => clearInterval(iv);
-  }, [fetchData, addLog]);
+    const name = asset ? (asset.kind === "stock" ? asset.symbol : String(asset.symbol || "").toUpperCase()) : "";
+    document.title = name ? `${name} · LENSTEDREAL Quantum Terminal` : "LENSTEDREAL Quantum Terminal";
+  }, [asset]);
+
+  const tickFor = asset && asset.kind !== "stock" ? ticks[asset.id] : null;
 
   return (
-    <div className="flex flex-col h-screen scanline" data-testid="dashboard">
-      <Header />
-      <TickerBar marketData={marketData} />
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_300px] gap-[2px] overflow-auto lg:overflow-hidden" style={{ background: 'rgba(30,41,59,0.2)' }} data-testid="terminal-grid">
-        <section className="flex flex-col overflow-hidden lg:order-1 order-2" style={{ background: 'rgba(7,10,16,0.8)' }}>
-          <AssetIntelligence marketData={marketData} systemLogs={systemLogs} loginLogs={[]} />
-        </section>
-        <section className="flex flex-col overflow-hidden lg:order-2 order-1 min-h-[55vh] lg:min-h-0" style={{ background: 'rgba(7,10,16,0.8)' }}>
-          <ChartPanel />
-        </section>
-        <section className="flex flex-col overflow-hidden lg:order-3 order-3" style={{ background: 'rgba(7,10,16,0.8)' }}>
-          <RightPanel />
-        </section>
+    <div className="qt" data-testid="dashboard">
+      <div className="qt-bg" aria-hidden="true" />
+      <Header status={status} updatedAt={updatedAt} onRefresh={reload} />
+      <TickerBar coins={coins} ticks={ticks} stamp={stamp} onPick={pick} loading={status === "loading"} />
+
+      {status === "error" && (
+        <div className="qt-banner is-down" role="alert">
+          Piyasa verisi alınamadı. İnternet bağlantını kontrol et; terminal 30 saniyede bir kendiliğinden yeniden dener.
+          <button type="button" className="qt-btn qt-btn-sm" onClick={reload}>Şimdi dene</button>
+        </div>
+      )}
+      {(status === "stale" || status === "offline") && (
+        <div className="qt-banner is-warn" role="status">
+          {status === "offline" ? "İnternet bağlantısı yok." : "Veri kaynağı şu an yanıt vermiyor."} Son alınan veriler gösteriliyor ({clockTR(updatedAt)}).
+        </div>
+      )}
+
+      <main className="qt-main" data-testid="terminal-grid">
+        <MarketList coins={coins} ticks={ticks} stamp={stamp} selectedId={asset ? asset.id : selectedId} onPick={pick} status={status} />
+        <div className="qt-center">
+          <GlobalStats global={global} />
+          <ChartPanel asset={asset} coins={coins} onPick={pick} tick={tickFor} stamp={stamp} loading={status === "loading"} />
+        </div>
+        <div className="qt-side">
+          <AssetIntelligence asset={asset} loading={status === "loading"} />
+          <RightPanel asset={asset} tab={tab} onTab={setTab} />
+        </div>
       </main>
       <Footer />
     </div>

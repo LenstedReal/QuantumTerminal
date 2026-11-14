@@ -1,28 +1,36 @@
 import React from "react";
-import { Download, Smartphone } from "lucide-react";
+import { Logo, clockTR, useNow } from "@/components/qt/ui";
 
-export default function Header() {
+const STATUS = {
+  loading: { text: "Bağlanıyor", cls: "is-wait" },
+  live: { text: "Canlı", cls: "is-live" },
+  stale: { text: "Gecikmeli veri", cls: "is-warn" },
+  offline: { text: "Bağlantı yok", cls: "is-down" },
+  error: { text: "Veri alınamadı", cls: "is-down" },
+};
+
+export default function Header({ status, updatedAt, onRefresh }) {
+  const now = useNow(1000);
+  const st = STATUS[status] || STATUS.loading;
   return (
-    <header className="h-[60px] px-4 flex justify-between items-center shrink-0 z-20" style={{
-      background: 'rgba(10,12,18,0.96)',
-      borderBottom: '1px solid #00f2ff',
-      boxShadow: '0 1px 15px rgba(0,242,255,0.1)',
-      backdropFilter: 'blur(8px)'
-    }} data-testid="header">
-      <div className="font-bold tracking-[2px] text-sm neon-glow" data-testid="header-brand">
-        LENSTEDREAL <span style={{ color: '#00f2ff' }}>SYSTEMS</span>
-      </div>
-      <div className="hidden sm:flex items-center gap-4">
-        <div className="blink text-xs" style={{ color: '#00ff6a', textShadow: '0 0 8px rgba(0,255,106,0.5)' }} data-testid="sync-status">● QUANTUM_SYNC_OK</div>
-      </div>
-      <div className="flex items-center gap-2">
-        <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold tracking-wider neon-btn" style={{ background: '#00f2ff', color: '#020204' }} data-testid="play-store-btn">
-          <Download className="w-3 h-3" /> İndir
-        </a>
-        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold tracking-wider opacity-50 cursor-not-allowed" style={{ border: '1px solid rgba(30,41,59,0.6)', color: '#64748b' }} data-testid="app-store-badge">
-          <Smartphone className="w-3 h-3" /> App Store <span className="text-[8px] ml-1">YAKINDA</span>
+    <header className="qt-top" data-testid="header">
+      <a className="qt-brand" href="/" aria-label="LENSTEDREAL Quantum Terminal ana sayfa">
+        <Logo size={32} />
+        <span className="qt-brand-text">
+          <span className="qt-brand-name">LENSTEDREAL</span>
+          <span className="qt-brand-sub">Quantum Terminal</span>
+        </span>
+      </a>
+      <div className="qt-top-right">
+        <button type="button" className={`qt-status ${st.cls}`} onClick={onRefresh} title="Şimdi yenile" data-testid="sync-status">
+          <span className="qt-status-dot" aria-hidden="true" />
+          <span>{st.text}</span>
+          {updatedAt && <span className="qt-status-time">güncelleme {clockTR(updatedAt)}</span>}
+        </button>
+        <div className="qt-clock" aria-label="İstanbul saati" data-testid="clock">
+          <span className="qt-clock-time">{clockTR(now)}</span>
+          <span className="qt-clock-zone">İstanbul</span>
         </div>
-        <div className="text-[10px] hidden md:block" style={{ color: '#64748b' }} data-testid="version-info">V10_PRO_NODE</div>
       </div>
     </header>
   );

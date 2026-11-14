@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --bg: #020204;
@@ -16,12 +15,12 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { background: #020204; color-scheme: dark; }
+html { background: #050912; color-scheme: dark; }
 
 body {
-  background: radial-gradient(circle at center, #0a0a15 0%, #020204 100%);
+  background: #050912;
   color: #cbd5e1;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
@@ -57,7 +56,7 @@ body {
 .flash-green { animation: flash-green 0.5s ease-out; }
 .flash-red { animation: flash-red 0.5s ease-out; }
 
-input:focus { border-color: var(--neon) !important; box-shadow: 0 0 4px rgba(0,242,255,0.2) !important; outline: none; }
+input:focus { border-color: var(--neon); box-shadow: 0 0 4px rgba(0,242,255,0.2); outline: none; }
 
 .neon-btn { transition: all 0.15s ease; }
 .neon-btn:hover { box-shadow: 0 0 8px rgba(0,242,255,0.2); filter: brightness(1.1); }

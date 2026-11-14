@@ -1,12 +1,11 @@
 {
   "short_name": "LENSTEDREAL",
-  "name": "LENSTEDREAL Quantum Terminal V10",
-  "description": "Profesyonel kripto ve borsa işlem platformu",
+  "name": "LENSTEDREAL Quantum Terminal",
+  "description": "Canlı kripto piyasası, grafikler ve otomatik analiz",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#00f2ff",
-  "background_color": "#020204",
+    "theme_color": "#050912",
+  "background_color": "#050912",
   "categories": ["finance", "business"],
   "icons": [
     {

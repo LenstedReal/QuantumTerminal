@@ -1,30 +1,23 @@
 import React from "react";
+import { fmtPrice, fmtPct, tone } from "@/lib/market";
 
-const formatPrice = (p) => {
-  if (typeof p !== "number" || !Number.isFinite(p)) return "--";
-  if (p >= 1) return "$" + p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return "$" + p.toFixed(6);
-};
-
-export default function TickerBar({ marketData }) {
-  if (!marketData || marketData.length === 0) return null;
-
-  const items = marketData.slice(0, 15);
-  const doubled = [...items, ...items];
-
+export default function TickerBar({ coins, ticks, stamp, onPick, loading }) {
+  if (!coins || coins.length === 0) return loading ? <div className="qt-ticker is-empty" aria-hidden="true" /> : null;
+  const items = coins.slice(0, 16);
+  const loop = [...items, ...items];
   return (
-    <div className="h-6 overflow-hidden flex items-center shrink-0" style={{ background: 'rgba(7,10,16,0.9)', borderBottom: '1px solid rgba(30,41,59,0.4)' }} data-testid="ticker-bar">
-      <div className="ticker-animate flex items-center gap-5 whitespace-nowrap px-4">
-        {doubled.map((coin, i) => {
-          const ch = typeof coin.price_change_percentage_24h === "number" ? coin.price_change_percentage_24h : null;
+    <div className="qt-ticker" data-testid="ticker-bar" aria-label="Fiyat şeridi">
+      <div className="qt-ticker-track">
+        {loop.map((c, i) => {
+          const ch = c.price_change_percentage_24h;
+          const tick = ticks[c.id];
           return (
-            <div key={`${coin.id}-${i}`} className="flex items-center gap-1.5 text-[10px]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-              <span style={{ color: '#64748b' }}>{coin.symbol?.toUpperCase()}</span>
-              <span style={{ color: '#cbd5e1' }}>{formatPrice(coin.current_price)}</span>
-              <span style={{ color: ch == null ? '#64748b' : ch >= 0 ? '#00ff6a' : '#ff003c' }}>
-                {ch == null ? "--" : `${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%`}
-              </span>
-            </div>
+            <button type="button" key={`${c.id}-${i}`} className="qt-tick" onClick={() => onPick(c.id)} tabIndex={i < items.length ? 0 : -1}
+              aria-hidden={i >= items.length ? "true" : undefined}>
+              <span className="qt-tick-sym">{String(c.symbol || "").toUpperCase()}</span>
+              <span key={tick ? stamp : "s"} className={`qt-tick-price${tick ? ` flash-${tick}` : ""}`}>{fmtPrice(c.current_price)}</span>
+              <span className={`qt-tick-ch ${tone(ch)}`}>{fmtPct(ch)}</span>
+            </button>
           );
         })}
       </div>
