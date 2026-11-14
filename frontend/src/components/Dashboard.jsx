@@ -11,6 +11,32 @@ import ChartPanel from "@/components/ChartPanel";
 import AssetIntelligence from "@/components/AssetIntelligence";
 import RightPanel from "@/components/RightPanel";
 import Footer from "@/components/Footer";
+import SystemLog from "@/components/SystemLog";
+import { HeatmapView, MarketsView, NewsView } from "@/components/Views";
+import { Icon } from "@/components/qt/ui";
+
+const VIEWS = [
+  { id: "terminal", label: "Terminal", icon: "chart" },
+  { id: "piyasalar", label: "Piyasalar", icon: "globe" },
+  { id: "harita", label: "Isı haritası", icon: "grid" },
+  { id: "takvim", label: "Takvim", icon: "calendar" },
+];
+const viewFromHash = () => {
+  const m = typeof window !== "undefined" ? /^\/([a-z]+)$/.exec(decodeURIComponent(window.location.hash.slice(1))) : null;
+  return m && VIEWS.some((v) => v.id === m[1]) ? m[1] : "terminal";
+};
+
+function Nav({ view, onGo, className }) {
+  return (
+    <nav className={`qt-nav ${className}`} aria-label="Bölümler">
+      {VIEWS.map((v) => (
+        <button key={v.id} type="button" aria-current={view === v.id ? "page" : undefined} onClick={() => onGo(v.id)} data-testid={`nav-${v.id}`}>
+          <Icon name={v.icon} size={17} /><span>{v.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 const initialId = () => {
   const h = typeof window !== "undefined" ? decodeURIComponent(window.location.hash.slice(1)) : "";
@@ -20,8 +46,9 @@ const initialId = () => {
 };
 
 export default function Dashboard() {
-  const { coins, global, status, updatedAt, ticks, reload } = useMarket();
+  const { coins, global, status, updatedAt, ticks, reload, source, logs } = useMarket();
   const [selectedId, setSelectedId] = useState(initialId);
+  const [view, setView] = useState(viewFromHash);
   const [tab, setTab] = useState("tech");
   const stamp = updatedAt ? updatedAt.getTime() : 0;
 
@@ -35,6 +62,7 @@ export default function Dashboard() {
 
   const pick = useCallback((id) => {
     setSelectedId(id);
+    setView("terminal");
     safeStore("qt-selected", id);
     try { window.history.replaceState(null, "", `#${id}`); } catch (e) { /* ignore */ }
     if (id.startsWith("stock-")) setTab("tech");
@@ -43,7 +71,12 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const onHash = () => { const h = decodeURIComponent(window.location.hash.slice(1)); if (/^[a-z0-9-]{2,60}$/.test(h)) setSelectedId(h); };
+    const onHash = () => {
+      const h = decodeURIComponent(window.location.hash.slice(1));
+      if (h.startsWith("/")) { setView(viewFromHash()); return; }
+      setView("terminal");
+      if (/^[a-z0-9-]{2,60}$/.test(h)) setSelectedId(h);
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -55,10 +88,18 @@ export default function Dashboard() {
 
   const tickFor = asset && asset.kind !== "stock" ? ticks[asset.id] : null;
 
+  const go = useCallback((id) => {
+    setView(id);
+    try { window.history.replaceState(null, "", id === "terminal" ? `#${selectedId}` : `#/${id}`); } catch (e) { /* ignore */ }
+    window.scrollTo(0, 0);
+  }, [selectedId]);
+
   return (
     <div className="qt" data-testid="dashboard">
       <div className="qt-bg" aria-hidden="true" />
-      <Header status={status} updatedAt={updatedAt} onRefresh={reload} />
+      <Header status={status} updatedAt={updatedAt} onRefresh={reload} source={source}>
+        <Nav view={view} onGo={go} className="qt-nav-top" />
+      </Header>
       <TickerBar coins={coins} ticks={ticks} stamp={stamp} onPick={pick} loading={status === "loading"} />
 
       {status === "error" && (
@@ -73,18 +114,27 @@ export default function Dashboard() {
         </div>
       )}
 
-      <main className="qt-main" data-testid="terminal-grid">
-        <MarketList coins={coins} ticks={ticks} stamp={stamp} selectedId={asset ? asset.id : selectedId} onPick={pick} status={status} />
-        <div className="qt-center">
-          <GlobalStats global={global} />
-          <ChartPanel asset={asset} coins={coins} onPick={pick} tick={tickFor} stamp={stamp} loading={status === "loading"} />
-        </div>
-        <div className="qt-side">
-          <AssetIntelligence asset={asset} loading={status === "loading"} />
-          <RightPanel asset={asset} tab={tab} onTab={setTab} />
-        </div>
-      </main>
+      {view === "terminal" && (
+        <main className="qt-main" data-testid="terminal-grid">
+          <div className="qt-left">
+            <MarketList coins={coins} ticks={ticks} stamp={stamp} selectedId={asset ? asset.id : selectedId} onPick={pick} status={status} />
+            <SystemLog logs={logs} source={source} />
+          </div>
+          <div className="qt-center">
+            <GlobalStats global={global} />
+            <ChartPanel asset={asset} coins={coins} onPick={pick} tick={tickFor} stamp={stamp} loading={status === "loading"} />
+          </div>
+          <div className="qt-side">
+            <AssetIntelligence asset={asset} loading={status === "loading"} />
+            <RightPanel asset={asset} tab={tab} onTab={setTab} />
+          </div>
+        </main>
+      )}
+      {view === "piyasalar" && <MarketsView />}
+      {view === "harita" && <HeatmapView />}
+      {view === "takvim" && <NewsView />}
       <Footer />
+      <Nav view={view} onGo={go} className="qt-nav-bottom" />
     </div>
   );
 }

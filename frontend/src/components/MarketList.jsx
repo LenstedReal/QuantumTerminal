@@ -27,7 +27,7 @@ export default function MarketList({ coins, ticks, stamp, selectedId, onPick, st
   return (
     <section className="qt-panel qt-market" aria-labelledby="mk-title" data-testid="market-list">
       <div className="qt-panel-head">
-        <h2 id="mk-title">Piyasa</h2>
+        <h2 id="mk-title"><span className="qt-mod" aria-hidden="true">01</span>Piyasa</h2>
         <span className="qt-muted">İlk 20 kripto</span>
       </div>
       <div className="qt-market-tools">

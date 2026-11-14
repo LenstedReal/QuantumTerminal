@@ -42,7 +42,7 @@ export default function AssetIntelligence({ asset, loading }) {
   return (
     <section className="qt-panel qt-intel" aria-labelledby="intel-title" data-testid="asset-intelligence">
       <div className="qt-panel-head">
-        <h2 id="intel-title">Kuantum analiz</h2>
+        <h2 id="intel-title"><span className="qt-mod" aria-hidden="true">02</span>Kuantum analiz</h2>
         {a && a.ok && <span className={`qt-conf is-${a.confidence === "yüksek" ? "hi" : a.confidence === "orta" ? "mid" : "lo"}`}>Güven: {a.confidence}</span>}
       </div>
 

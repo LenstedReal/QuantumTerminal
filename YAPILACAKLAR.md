@@ -7,11 +7,12 @@
 - [x] Yeni görünüm: cam paneller, açılış animasyonu, fiyat değişiminde yanıp sönen rakamlar, telefonda düzgün düzen.
 - [x] Sahte "GÜÇLÜ AL" sinyalleri kaldırıldı. "Kuantum analiz" artık fiyat verisinden hesaplanıyor (ortalama farkı, 7 gün, 24 saat, RSI) ve nasıl hesaplandığını gösteriyor.
 - [x] "Yapay zekâ hata yapabilir, yatırım tavsiyesi değildir" notu eklendi.
+- [x] V11: Piyasalar (BIST, dolar, euro, gram altın, endeksler, emtia, döviz), ısı haritaları, ekonomik takvim ve haberler, sistem kaydı.
+- [x] Bağlantı: Vercel önbellek (`frontend/api`), CoinGecko, Binance/CoinPaprika yedekleri; son veriler tarayıcıda saklanır.
 - [ ] Giriş ekranı: `App.js` sadece paneli gösteriyor, giriş/2FA ekranı hiç bağlı değil. Giriş zorunlu mu olacak, panel herkese açık mı kalacak? Karar verilecek.
 - Not: `design_guidelines.json` ve `memory/PRD.md` eski tasarım notları; Play Store düğmesinden bahsediyorlar ama sitede gösterilmiyorlar.
 
 ## Sahibinin yapması gerekenler
-- [ ] Eski admin şifresi depo geçmişinde duruyor: **şifreyi değiştir**. Yeni şifre sunucuda `ADMIN_PASSWORD` ortam değişkeni olarak verilir.
 - [ ] `.gitconfig` dosyası birinin adı ve e-postasıyla depoda; tutulsun mu silinsin mi?
 - [ ] Sunucu (backend) şu an nerede çalışıyor? Vercel yalnızca arayüzü yayınlıyor. Sunucu yoksa giriş ve sunucu üzerinden veri çalışmaz (arayüz CoinGecko'ya doğrudan bağlanır).
 

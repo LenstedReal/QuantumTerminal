@@ -431,7 +431,7 @@
   .qt-main { grid-template-columns: 316px minmax(0, 1fr); }
   .qt-side { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
   .qt-chart { min-height: 640px; }
-  .qt-market { max-height: 820px; }
+  .qt-left .qt-market { max-height: 820px; }
 }
 @media (max-width: 900px) {
   .qt-top { padding: 0 12px; height: 56px; }
@@ -441,8 +441,10 @@
   .qt-main { display: flex; flex-direction: column; padding: 10px; gap: 10px; }
   .qt-center { order: 1; }
   .qt-side { order: 2; display: flex; }
-  .qt-market { order: 3; max-height: none; }
+  .qt-left { order: 3; }
+  .qt-market { max-height: none; }
   .qt-market-list { overflow: visible; }
+  .qt-log { height: 240px; }
   .qt-global { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .qt-global-item:nth-child(3) { border-left: 0; }
   .qt-global-item:nth-child(n + 3) { border-top: 1px solid var(--line); }
@@ -470,4 +472,60 @@
   .qt *, .qt *::before, .qt *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
   .qt-ticker-track { animation: none !important; }
   .qt-ticker { overflow-x: auto; }
+}
+
+
+/* ---------- echoes of the original V10 design: neon line, scanlines, module numbers ---------- */
+.qt-top { border-bottom-color: rgba(62, 230, 245, 0.5); box-shadow: 0 1px 18px rgba(62, 230, 245, 0.12); }
+.qt-bg::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 3px); }
+.qt-mod { display: inline-block; margin-right: 8px; font: 600 11px var(--mono); letter-spacing: 0.04em; color: var(--cyan); opacity: 0.85; vertical-align: 1px; }
+
+/* ---------- navigation ---------- */
+.qt-nav { display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 1px solid var(--line); background: rgba(5, 9, 18, 0.55); }
+.qt-nav button { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 9px; font: 600 13px var(--display); letter-spacing: 0.02em; color: var(--text-3); white-space: nowrap; transition: color 0.2s, background 0.2s, box-shadow 0.2s; }
+.qt-nav button:hover { color: var(--text); background: rgba(255, 255, 255, 0.04); }
+.qt-nav button[aria-current="page"] { color: var(--ink); background: linear-gradient(135deg, var(--cyan), #8ff3fa); box-shadow: 0 0 16px rgba(62, 230, 245, 0.35); }
+.qt-nav-top { margin: 0 auto; }
+.qt-nav-bottom { display: none; }
+
+/* ---------- terminal left column: market list + system log ---------- */
+.qt-left { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
+.qt-left .qt-market { flex: 1; }
+.qt-log { flex: 0 0 auto; height: 196px; }
+.qt-log-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 10px; list-style: none; font: 11.5px/1.6 var(--mono); scrollbar-width: thin; scrollbar-color: rgba(62, 230, 245, 0.25) transparent; }
+.qt-log-item { display: flex; gap: 8px; color: var(--text-2); }
+.qt-log-time { flex-shrink: 0; color: var(--cyan); }
+.qt-log-text { min-width: 0; overflow-wrap: anywhere; }
+.qt-log-item.is-ok .qt-log-text { color: #bfeedd; }
+.qt-log-item.is-warn .qt-log-text { color: #fbe6b2; }
+.qt-log-item.is-down .qt-log-text { color: #ffc2cc; }
+
+/* ---------- extra views ---------- */
+.qt-view { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: min-content; align-content: start; gap: 12px; padding: 12px; animation: qt-view-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes qt-view-in { from { opacity: 0; transform: translateY(12px); filter: blur(4px); } }
+.qt-span-2 { grid-column: 1 / -1; }
+.qt-tape { grid-column: 1 / -1; height: 74px; overflow: hidden; }
+.qt-tape-tv { height: 100%; border-radius: inherit; overflow: hidden; }
+.qt-vtv { height: 470px; margin: 0 10px 10px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #090f1c; }
+.qt-vtv-tall { height: 580px; }
+
+@media (max-width: 1180px) {
+  .qt-status-time { display: none; }
+  .qt-nav button { padding: 0 10px; }
+}
+@media (max-width: 900px) {
+  .qt { padding-bottom: calc(74px + env(safe-area-inset-bottom)); }
+  .qt-nav-top { display: none; }
+  .qt-nav-bottom {
+    display: flex; position: fixed; z-index: 40; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-between; gap: 2px; padding: 5px; border-radius: 16px; border-color: var(--line-2);
+    background: rgba(6, 11, 22, 0.88); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+  .qt-nav-bottom button { flex: 1; flex-direction: column; justify-content: center; gap: 3px; height: 52px; padding: 0 4px; font-size: 11px; }
+  .qt-view { grid-template-columns: minmax(0, 1fr); padding: 10px; gap: 10px; overflow: visible; }
+  .qt-vtv { height: 430px; margin: 0 8px 8px; }
+  .qt-vtv-tall { height: 520px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qt-view { animation: none; }
 }
