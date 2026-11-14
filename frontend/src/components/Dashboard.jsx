@@ -11,7 +11,6 @@ import ChartPanel from "@/components/ChartPanel";
 import AssetIntelligence from "@/components/AssetIntelligence";
 import RightPanel from "@/components/RightPanel";
 import Footer from "@/components/Footer";
-import SystemLog from "@/components/SystemLog";
 import { HeatmapView, MarketsView, NewsView } from "@/components/Views";
 import { Icon } from "@/components/qt/ui";
 
@@ -46,7 +45,7 @@ const initialId = () => {
 };
 
 export default function Dashboard() {
-  const { coins, global, status, updatedAt, ticks, reload, source, logs } = useMarket();
+  const { coins, global, status, updatedAt, ticks, reload, source } = useMarket();
   const [selectedId, setSelectedId] = useState(initialId);
   const [view, setView] = useState(viewFromHash);
   const [tab, setTab] = useState("tech");
@@ -118,7 +117,6 @@ export default function Dashboard() {
         <main className="qt-main" data-testid="terminal-grid">
           <div className="qt-left">
             <MarketList coins={coins} ticks={ticks} stamp={stamp} selectedId={asset ? asset.id : selectedId} onPick={pick} status={status} />
-            <SystemLog logs={logs} source={source} />
           </div>
           <div className="qt-center">
             <GlobalStats global={global} />

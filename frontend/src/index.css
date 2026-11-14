@@ -2,66 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-
-:root {
-  --bg: #020204;
-  --neon: #00f2ff;
-  --neon-glow: rgba(0, 242, 255, 0.25);
-  --danger: #ff003c;
-  --success: #00ff6a;
-  --text-main: #cbd5e1;
-  --text-dim: #64748b;
-  --border: rgba(30, 41, 59, 0.6);
-}
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { background: #050912; color-scheme: dark; }
+html { background: #020204; color-scheme: dark; }
 
 body {
-  background: #050912;
-  color: #cbd5e1;
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  background: #020204;
+  color: #cbd5e1;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root { min-height: 100vh; }
 
-.scanline::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.06) 50%);
-  background-size: 100% 4px;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0.25;
-}
-
-::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #020204; }
-::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.2); }
-
-@keyframes blinker { 50% { opacity: 0.3; } }
-.blink { animation: blinker 2s infinite; }
-
-.neon-glow { text-shadow: 0 0 6px rgba(0,242,255,0.3); }
-.neon-border { box-shadow: 0 0 8px rgba(0,242,255,0.08); }
-
-@keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-.ticker-animate { animation: ticker-scroll 35s linear infinite; }
-
-@keyframes flash-green { 0% { background-color: rgba(0,255,106,0.12); } 100% { background-color: transparent; } }
-@keyframes flash-red { 0% { background-color: rgba(255,0,60,0.12); } 100% { background-color: transparent; } }
-.flash-green { animation: flash-green 0.5s ease-out; }
-.flash-red { animation: flash-red 0.5s ease-out; }
-
-input:focus { border-color: var(--neon); box-shadow: 0 0 4px rgba(0,242,255,0.2); outline: none; }
-
-.neon-btn { transition: all 0.15s ease; }
-.neon-btn:hover { box-shadow: 0 0 8px rgba(0,242,255,0.2); filter: brightness(1.1); }
-
-.tradingview-widget-container { height: 100% !important; }
-.tradingview-widget-container iframe { height: 100% !important; }
-
-@layer base { [data-debug-wrapper="true"] { display: contents !important; } }
+::-webkit-scrollbar-thumb { background: rgba(0, 242, 255, 0.22); }

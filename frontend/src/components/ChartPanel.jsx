@@ -25,7 +25,11 @@ export default function ChartPanel({ asset, coins, onPick, tick, stamp, loading 
   const quick = QUICK.map((id) => (coins || []).find((c) => c.id === id)).filter(Boolean);
 
   return (
-    <section className="qt-panel qt-chart" aria-label="Grafik" data-testid="chart-panel">
+    <section className="qt-panel qt-chart" aria-labelledby="chart-title" data-testid="chart-panel">
+      <div className="qt-panel-head">
+        <h2 id="chart-title"><span className="qt-mod" aria-hidden="true">02</span>Quantum core chart</h2>
+        <span className="qt-muted">TradingView</span>
+      </div>
       <div className="qt-asset">
         <div className="qt-asset-id">
           {coin ? <CoinMark coin={coin} size={40} /> : asset ? <span className="qt-coinmark is-letter is-stock" style={{ width: 40, height: 40 }} aria-hidden="true">{asset.symbol.charAt(0)}</span> : <span className="qt-coinmark is-pending" style={{ width: 40, height: 40 }} aria-hidden="true" />}
@@ -85,8 +89,8 @@ export default function ChartPanel({ asset, coins, onPick, tick, stamp, loading 
           theme: "dark",
           style: "1",
           locale: "tr",
-          backgroundColor: "rgba(9, 15, 28, 1)",
-          gridColor: "rgba(120, 160, 200, 0.06)",
+          backgroundColor: "rgba(7, 10, 16, 1)",
+          gridColor: "rgba(30, 41, 59, 0.5)",
           allow_symbol_change: true,
           calendar: false,
           hide_volume: false,

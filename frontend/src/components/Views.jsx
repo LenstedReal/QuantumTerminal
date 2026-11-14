@@ -63,14 +63,14 @@ export function MarketsView() {
       <div className="qt-panel qt-tape" data-testid="markets-tape">
         <TVWidget className="qt-tape-tv" label="Piyasa şeridi" script="embed-widget-ticker-tape.js" config={TAPE} />
       </div>
-      <Panel num="04" title="Küresel piyasalar" sub="Türkiye, endeksler, emtia, döviz, kripto" className="qt-span-2" testid="markets-overview">
+      <Panel num="05" title="Küresel piyasalar" sub="Türkiye, endeksler, emtia, döviz, kripto" className="qt-span-2" testid="markets-overview">
         <TVWidget className="qt-vtv qt-vtv-tall" label="Piyasa özeti" script="embed-widget-market-overview.js" config={OVERVIEW} />
       </Panel>
-      <Panel num="05" title="Çapraz kurlar" sub="Başlıca para birimleri" testid="markets-fx">
+      <Panel num="06" title="Çapraz kurlar" sub="Başlıca para birimleri" testid="markets-fx">
         <TVWidget className="qt-vtv" label="Çapraz kurlar" script="embed-widget-forex-cross-rates.js"
           config={{ width: "100%", height: "100%", currencies: ["EUR", "USD", "JPY", "GBP", "CHF", "TRY"], isTransparent: true, colorTheme: "dark", locale: "tr" }} />
       </Panel>
-      <Panel num="06" title="BIST tarayıcı" sub="Borsa İstanbul" testid="markets-bist">
+      <Panel num="07" title="BIST tarayıcı" sub="Borsa İstanbul" testid="markets-bist">
         <TVWidget className="qt-vtv" label="BIST tarayıcı" script="embed-widget-screener.js"
           config={{ width: "100%", height: "100%", defaultColumn: "overview", defaultScreen: "most_capitalized", market: "turkey", showToolbar: true, colorTheme: "dark", locale: "tr", isTransparent: true }} />
       </Panel>
@@ -81,11 +81,11 @@ export function MarketsView() {
 export function HeatmapView() {
   return (
     <div className="qt-view qt-view-heat" data-testid="view-heatmap">
-      <Panel num="07" title="Kripto ısı haritası" sub="Kutu büyüklüğü: piyasa değeri · renk: 24 saatlik değişim" className="qt-span-2" testid="heat-crypto">
+      <Panel num="08" title="Kripto ısı haritası" sub="Kutu büyüklüğü: piyasa değeri · renk: 24 saatlik değişim" className="qt-span-2" testid="heat-crypto">
         <TVWidget className="qt-vtv qt-vtv-tall" label="Kripto ısı haritası" script="embed-widget-crypto-coins-heatmap.js"
           config={{ dataSource: "Crypto", blockSize: "market_cap_calc", blockColor: "change", locale: "tr", symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" }} />
       </Panel>
-      <Panel num="08" title="ABD hisse ısı haritası" sub="S&P 500" className="qt-span-2" testid="heat-stocks">
+      <Panel num="09" title="ABD hisse ısı haritası" sub="S&P 500" className="qt-span-2" testid="heat-stocks">
         <TVWidget className="qt-vtv qt-vtv-tall" label="Hisse ısı haritası" script="embed-widget-stock-heatmap.js"
           config={{ exchanges: [], dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "tr", symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" }} />
       </Panel>
@@ -96,11 +96,11 @@ export function HeatmapView() {
 export function NewsView() {
   return (
     <div className="qt-view qt-view-news" data-testid="view-news">
-      <Panel num="09" title="Ekonomik takvim" sub="Türkiye, ABD, Euro bölgesi, İngiltere, Japonya, Çin" testid="news-calendar">
+      <Panel num="10" title="Ekonomik takvim" sub="Türkiye, ABD, Euro bölgesi, İngiltere, Japonya, Çin" testid="news-calendar">
         <TVWidget className="qt-vtv qt-vtv-tall" label="Ekonomik takvim" script="embed-widget-events.js"
           config={{ colorTheme: "dark", isTransparent: true, width: "100%", height: "100%", locale: "tr", importanceFilter: "0,1", countryFilter: "tr,us,eu,gb,jp,cn" }} />
       </Panel>
-      <Panel num="10" title="Piyasa haberleri" sub="TradingView haber akışı" testid="news-feed">
+      <Panel num="11" title="Piyasa haberleri" sub="TradingView haber akışı" testid="news-feed">
         <TVWidget className="qt-vtv qt-vtv-tall" label="Haberler" script="embed-widget-timeline.js"
           config={{ feedMode: "all_symbols", isTransparent: true, displayMode: "regular", width: "100%", height: "100%", colorTheme: "dark", locale: "tr" }} />
       </Panel>

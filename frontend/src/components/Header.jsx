@@ -18,7 +18,7 @@ export default function Header({ status, updatedAt, onRefresh, source, children 
         <Logo size={32} />
         <span className="qt-brand-text">
           <span className="qt-brand-name">LENSTEDREAL</span>
-          <span className="qt-brand-sub">Quantum Terminal V11</span>
+          <span className="qt-brand-sub">Quantum Terminal</span>
         </span>
       </a>
       {children}
