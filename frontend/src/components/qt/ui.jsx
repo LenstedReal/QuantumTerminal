@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { sparkPath, thin } from "@/lib/market";
 
 const reduceMotion = () =>
   typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -32,6 +31,7 @@ const PATHS = {
   grid: <><rect x="3.5" y="3.5" width="7" height="9" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" /><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" /><rect x="3.5" y="15.5" width="7" height="5" rx="1.5" /></>,
   calendar: <><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
   globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></>,
+  star: <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
 };
 export function Icon({ name, size = 16 }) {
   return (
@@ -40,16 +40,6 @@ export function Icon({ name, size = 16 }) {
   );
 }
 
-/* Small 7-day line. */
-export function Sparkline({ values, tone = "flat", w = 92, h = 28, points = 48, className = "" }) {
-  const d = sparkPath(thin(values, points), w, h);
-  if (!d) return <span className={`qt-spark ${className}`} style={{ width: w, height: h }} aria-hidden="true" />;
-  return (
-    <svg className={`qt-spark ${className}`} width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <path d={d} className={`qt-spark-line ${tone}`} pathLength="1" />
-    </svg>
-  );
-}
 
 /* Number that "decodes" into its new value when it changes. */
 export function Scramble({ text, className = "" }) {
@@ -88,15 +78,23 @@ export function useNow(intervalMs = 1000) {
 export const clockTR = (d) =>
   d ? d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Europe/Istanbul" }) : "—";
 
-/* Coin logo with a lettered fallback when the image cannot load. */
-export function CoinMark({ coin, size = 26 }) {
+/* Instrument logo with a lettered fallback when there is no image or it cannot load. */
+export function Mark({ row, size = 26 }) {
   const [broken, setBroken] = useState(false);
-  const letter = String((coin && (coin.symbol || coin.name)) || "?").charAt(0).toUpperCase();
-  if (!coin || !coin.image || broken) {
-    return <span className="qt-coinmark is-letter" style={{ width: size, height: size }} aria-hidden="true">{letter}</span>;
+  const letter = String((row && (row.sym || row.name)) || "?").replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g, "").charAt(0).toUpperCase() || "?";
+  if (row && row.logo && row.logo2 && !broken) {
+    return (
+      <span className="qt-pair" style={{ width: size, height: size }} aria-hidden="true">
+        <img src={row.logo} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setBroken(true)} />
+        <img src={row.logo2} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setBroken(true)} />
+      </span>
+    );
+  }
+  if (!row || !row.logo || broken) {
+    return <span className={`qt-coinmark is-letter is-${row ? row.m : "x"}`} style={{ width: size, height: size }} aria-hidden="true">{letter}</span>;
   }
   return (
-    <img className="qt-coinmark" src={coin.image} alt="" width={size} height={size} loading="lazy" decoding="async"
+    <img className="qt-coinmark" src={row.logo} alt="" width={size} height={size} loading="lazy" decoding="async"
       referrerPolicy="no-referrer" onError={() => setBroken(true)} />
   );
 }

@@ -1,19 +1,20 @@
 import React, { useState } from "react";
-import { tvSymbolFor } from "@/lib/market";
+import { tvFor } from "@/lib/market";
 import TVWidget from "@/components/qt/TVWidget";
 
 const MARKETS = [
   { id: "crypto", label: "Kripto" },
-  { id: "america", label: "ABD hisseleri" },
+  { id: "america", label: "ABD" },
+  { id: "turkey", label: "BIST" },
 ];
 
 export default function RightPanel({ asset, tab, onTab }) {
   const [market, setMarket] = useState("crypto");
-  const symbol = asset ? (asset.kind === "stock" ? asset.tv : tvSymbolFor(asset)) : "BINANCE:BTCUSDT";
+  const symbol = tvFor(asset);
 
   const screener = market === "crypto"
     ? { width: "100%", height: "100%", defaultColumn: "overview", screener_type: "crypto_mkt", displayCurrency: "USD", colorTheme: "dark", locale: "tr", isTransparent: true }
-    : { width: "100%", height: "100%", defaultColumn: "overview", defaultScreen: "most_capitalized", market: "america", showToolbar: false, colorTheme: "dark", locale: "tr", isTransparent: true };
+    : { width: "100%", height: "100%", defaultColumn: "overview", defaultScreen: "most_capitalized", market, showToolbar: false, colorTheme: "dark", locale: "tr", isTransparent: true };
 
   return (
     <section className="qt-panel qt-widgets" aria-label="TradingView araçları" data-testid="right-panel">

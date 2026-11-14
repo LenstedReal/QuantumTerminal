@@ -1,89 +1,111 @@
-// Market math for the terminal: formatting (Turkish locale), indicators and the transparent signal score.
-// Everything here is a pure function of CoinGecko /coins/markets data (sparkline=true, 1h/24h/7d changes).
+/* Market model shared by the whole interface: markets, formatting (Turkish), symbol mapping and the transparent analysis. */
 
+export const MARKETS = [
+  { id: "kripto", label: "Kripto", note: "CoinGecko ilk 250, 24 saatlik" },
+  { id: "us", label: "ABD hisseleri", short: "ABD", note: "Piyasa değerine göre ilk 200" },
+  { id: "bist", label: "BIST", note: "Piyasa değerine göre ilk 150" },
+  { id: "fx", label: "Döviz", note: "TL çiftleri, majörler, gelişen piyasalar" },
+  { id: "emtia", label: "Emtia", note: "Değerli metaller, enerji, tarım" },
+  { id: "endeks", label: "Endeksler", short: "Endeks", note: "Borsa endeksleri ve tahvil faizleri" },
+];
+export const marketLabel = (id) => (MARKETS.find((m) => m.id === id) || { label: id }).label;
+
+export const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+const clamp = (v, lo = -1, hi = 1) => Math.max(lo, Math.min(hi, v));
 const NBSP = " ";
 const MINUS = "−";
 
-export const isNum = (v) => typeof v === "number" && Number.isFinite(v);
-
-/* ---------- formatting ---------- */
-export function fmtPrice(v) {
-  if (!isNum(v)) return "—";
+function decimals(v) {
   const a = Math.abs(v);
-  const digits = a >= 1000 ? 2 : a >= 1 ? 2 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : 8;
-  return "$" + v.toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  if (a >= 1000) return 2;
+  if (a >= 1) return 2;
+  if (a >= 0.01) return 4;
+  if (a >= 0.0001) return 6;
+  return 8;
 }
 
-export function fmtCompact(v) {
+export function fmtNum(v, digits) {
   if (!isNum(v)) return "—";
-  const a = Math.abs(v);
-  const f = (n, u) => "$" + n.toLocaleString("tr-TR", { maximumFractionDigits: n >= 100 ? 0 : 2 }) + NBSP + u;
-  if (a >= 1e12) return f(v / 1e12, "tn");
-  if (a >= 1e9) return f(v / 1e9, "mr");
-  if (a >= 1e6) return f(v / 1e6, "mn");
-  return "$" + Math.round(v).toLocaleString("tr-TR");
+  const d = digits == null ? decimals(v) : digits;
+  return v.toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
-// Turkish style percent: "%2,13" with an explicit sign when asked.
+const CUR = { USD: ["$", ""], EUR: ["€", ""], GBP: ["£", ""], TRY: ["", `${NBSP}₺`] };
+
+// Price in the instrument's own terms: "$190,50", "312,50 ₺", FX rates and index points without a sign.
+export function fmtPrice(v, cur = "USD", digits) {
+  if (!isNum(v)) return "—";
+  const s = fmtNum(v, digits);
+  if (!cur) return s;
+  const c = CUR[cur];
+  return c ? `${c[0]}${s}${c[1]}` : `${s}${NBSP}${cur}`;
+}
+
+export function priceOf(r) {
+  if (!r) return "—";
+  if (r.m === "fx") return fmtNum(r.p, Math.abs(r.p) < 20 ? 4 : 2);
+  if (r.m === "endeks") return fmtNum(r.p, 2);
+  return fmtPrice(r.p, r.cur || (r.m === "kripto" ? "USD" : null));
+}
+
+export function fmtCompact(v, cur = "USD") {
+  if (!isNum(v)) return "—";
+  const a = Math.abs(v);
+  const [n, u] = a >= 1e12 ? [v / 1e12, "tn"] : a >= 1e9 ? [v / 1e9, "mr"] : a >= 1e6 ? [v / 1e6, "mn"] : a >= 1e3 ? [v / 1e3, "bin"] : [v, ""];
+  const s = n.toLocaleString("tr-TR", { maximumFractionDigits: 2 }) + (u ? `${NBSP}${u}` : "");
+  if (!cur) return s;
+  const c = CUR[cur];
+  return c ? `${c[0]}${s}${c[1]}` : `${s}${NBSP}${cur}`;
+}
+
 export function fmtPct(v, { digits = 2, sign = true } = {}) {
   if (!isNum(v)) return "—";
-  const body = "%" + Math.abs(v).toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  if (!sign) return (v < 0 ? MINUS : "") + body;
-  return (v > 0 ? "+" : v < 0 ? MINUS : "") + body;
+  const s = Math.abs(v).toLocaleString("tr-TR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const pre = !sign ? "" : v > 0 ? "+" : v < 0 ? MINUS : "";
+  return `${pre}%${s}`;
 }
 
-export const tone = (v) => (!isNum(v) ? "flat" : v > 0 ? "up" : v < 0 ? "down" : "flat");
+export const tone = (v) => (!isNum(v) || Math.abs(v) < 0.005 ? "flat" : v > 0 ? "up" : "down");
 
-/* ---------- indicators ---------- */
-export function sma(values, n) {
-  if (!values || values.length < n) return null;
-  let s = 0;
-  for (let i = values.length - n; i < values.length; i++) s += values[i];
-  return s / n;
+export const trLower = (s) => String(s || "").toLocaleLowerCase("tr-TR");
+
+/* ---------- symbols ---------- */
+const BINANCE = new Set("btc eth bnb sol xrp doge ada trx avax link dot bch ltc near uni xlm atom etc fil apt arb op sui ton shib pepe icp hbar inj kas render rndr imx stx vet algo grt ftm aave mkr qnt egld sand mana axs theta xtz eos flow chz neo ksm zec dash comp snx crv ldo gala enj 1inch bat rune kava cake ens wld sei tia jup pyth bonk floki wif ordi pendle ena".split(" "));
+const STABLES = new Set("usdt usdc dai fdusd tusd usdd usde pyusd busd usdp gusd frax lusd eurc eurt usds usd0 rlusd usdtb susde".split(" "));
+
+export const isStable = (r) => r && r.m === "kripto" && STABLES.has(trLower(r.sym));
+
+export function tvFor(r) {
+  if (!r) return "BINANCE:BTCUSDT";
+  if (r.tv) return r.tv;
+  const s = trLower(r.sym);
+  if (s === "wbtc" || s === "cbbtc") return "BINANCE:BTCUSDT";
+  if (s === "steth" || s === "wsteth" || s === "weth" || s === "weeth") return "BINANCE:ETHUSDT";
+  if (STABLES.has(s)) return s === "usdt" ? "BINANCE:USDCUSDT" : `CRYPTO:${s.toUpperCase()}USD`;
+  if (BINANCE.has(s)) return `BINANCE:${s.toUpperCase()}USDT`;
+  return `CRYPTO:${s.toUpperCase()}USD`;
 }
 
-// Wilder's RSI on closes; returns the latest value (0..100) or null.
-export function rsi(closes, period = 14) {
-  if (!closes || closes.length <= period) return null;
-  let gain = 0, loss = 0;
-  for (let i = 1; i <= period; i++) {
-    const d = closes[i] - closes[i - 1];
-    if (d >= 0) gain += d; else loss -= d;
-  }
-  let ag = gain / period, al = loss / period;
-  for (let i = period + 1; i < closes.length; i++) {
-    const d = closes[i] - closes[i - 1];
-    ag = (ag * (period - 1) + Math.max(d, 0)) / period;
-    al = (al * (period - 1) + Math.max(-d, 0)) / period;
-  }
-  if (al === 0) return ag === 0 ? 50 : 100;
-  return 100 - 100 / (1 + ag / al);
+/* ---------- gram gold (computed): ounce gold in USD x USD/TRY / 31.1035 ---------- */
+export const OUNCE_G = 31.1034768;
+export function gramGold(gold, usdtry) {
+  if (!gold || !usdtry || !isNum(gold.p) || !isNum(usdtry.p)) return null;
+  const p = (gold.p * usdtry.p) / OUNCE_G;
+  const ch = isNum(gold.ch) && isNum(usdtry.ch) ? ((1 + gold.ch / 100) * (1 + usdtry.ch / 100) - 1) * 100 : null;
+  return {
+    id: "CALC:GRAMALTIN", tv: "FX_IDC:XAUTRYG", m: "emtia", sym: "GRAM", name: "Gram altın (hesaplanan)", ex: "Hesaplama", cur: "TRY",
+    p, ch, cha: isNum(ch) ? p - p / (1 + ch / 100) : null, calc: true,
+    note: `${gold.name} × Dolar/TL ÷ 31,1035`,
+  };
 }
 
-// Daily volatility in % from hourly closes (std-dev of hourly log returns × √24).
-export function dailyVolatility(closes) {
-  if (!closes || closes.length < 25) return null;
-  const r = [];
-  for (let i = 1; i < closes.length; i++) if (closes[i] > 0 && closes[i - 1] > 0) r.push(Math.log(closes[i] / closes[i - 1]));
-  if (r.length < 24) return null;
-  const m = r.reduce((a, b) => a + b, 0) / r.length;
-  const v = r.reduce((a, b) => a + (b - m) * (b - m), 0) / (r.length - 1);
-  return Math.sqrt(v) * Math.sqrt(24) * 100;
+/* ---------- analysis ---------- */
+export const WEIGHTS = { rec: 0.35, pw: 0.25, ch: 0.2, rsi: 0.2 };
+
+export function recLabel(v) {
+  if (!isNum(v)) return "—";
+  return v >= 0.5 ? "Güçlü al" : v >= 0.1 ? "Al" : v > -0.1 ? "Nötr" : v > -0.5 ? "Sat" : "Güçlü sat";
 }
-
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-
-/* ---------- classification ---------- */
-const STABLE = new Set(["usdt", "usdc", "dai", "fdusd", "usde", "usds", "pyusd", "tusd", "usdd", "busd", "usd1", "usdtb", "gusd", "frax", "lusd", "eurc"]);
-export const isStablecoin = (c) => !!c && (STABLE.has(String(c.symbol || "").toLowerCase()) ||
-  (isNum(c.current_price) && Math.abs(c.current_price - 1) < 0.02 && /usd|dollar|stable/i.test(String(c.name || ""))));
-
-export function closesOf(coin) {
-  const p = coin && coin.sparkline_in_7d && coin.sparkline_in_7d.price;
-  return Array.isArray(p) ? p.filter(isNum) : [];
-}
-
-export const WEIGHTS = { trend: 0.35, mom7: 0.25, mom24: 0.2, rsi: 0.2 };
 
 export function labelFor(score) {
   if (score >= 45) return { text: "Güçlü yükseliş eğilimi", tone: "up" };
@@ -93,122 +115,55 @@ export function labelFor(score) {
   return { text: "Güçlü düşüş eğilimi", tone: "down" };
 }
 
+export const rsiZone = (r) => (!isNum(r) ? "—" : r >= 70 ? "aşırı alım bölgesi" : r <= 30 ? "aşırı satım bölgesi" : "dengeli bölge");
+
+const pctWord = (v, up, down) => `${fmtPct(Math.abs(v), { sign: false })} ${v >= 0 ? up : down}`;
+
 /*
- * The signal score (−100…100) is a weighted sum of four components, each squashed to −1…1:
- *   trend  = tanh(gap% / 2)   gap = short (24h) average vs long (72h) average of hourly prices
- *   mom7   = tanh(change7d / 12)
- *   mom24  = tanh(change24h / 5)
- *   rsi    = clamp((RSI14 − 50) / 25, −1, 1)
- * It describes the recent trend; it does not predict the future.
+ * Transparent score from real data, -100..+100:
+ *   35% TradingView technical rating (26 indicators), 25% weekly change, 20% daily change, 20% RSI(14).
+ * Missing inputs are left out and the remaining weights are rescaled; fewer inputs lower the confidence.
  */
-export function analyze(coin) {
-  if (!coin) return { ok: false, reason: "Bir varlık seç." };
-  if (isStablecoin(coin)) {
-    return { ok: false, stable: true, reason: `${coin.name} bir sabit coin: fiyatı 1 dolarda tutulmaya çalışılır, bu yüzden eğilim analizi anlamlı değil.` };
-  }
-  const closes = closesOf(coin);
-  if (closes.length < 80) return { ok: false, reason: "Bu varlık için yeterli fiyat geçmişi yok (en az 80 saatlik veri gerekir)." };
-
-  const price = isNum(coin.current_price) ? coin.current_price : closes[closes.length - 1];
-  const s24 = sma(closes, 24), s72 = sma(closes, 72);
-  const gap = s24 && s72 ? ((s24 - s72) / s72) * 100 : 0;
-  const ch24 = isNum(coin.price_change_percentage_24h) ? coin.price_change_percentage_24h : 0;
-  const ch7 = isNum(coin.price_change_percentage_7d_in_currency) ? coin.price_change_percentage_7d_in_currency
-    : ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100;
-  const r = rsi(closes, 14);
-  const vol = dailyVolatility(closes);
-  const lo = Math.min(...closes, price), hi = Math.max(...closes, price);
-  const pos = hi > lo ? (price - lo) / (hi - lo) : 0.5;
-
-  const comp = {
-    trend: Math.tanh(gap / 2),
-    mom7: Math.tanh(ch7 / 12),
-    mom24: Math.tanh(ch24 / 5),
-    rsi: r == null ? 0 : clamp((r - 50) / 25, -1, 1),
-  };
-  const raw = Object.keys(WEIGHTS).reduce((s, k) => s + WEIGHTS[k] * comp[k], 0);
-  const score = Math.round(clamp(raw, -1, 1) * 100);
+export function analyzeQuote(r) {
+  if (!r) return { ok: false, reason: "Bir sembol seç." };
+  if (isStable(r)) return { ok: false, stable: true, reason: `${r.name} bir sabit coin: fiyatı 1 dolarda tutulmaya çalışılır, bu yüzden eğilim analizi anlamlı değil.` };
+  const day = r.m === "kripto" ? "Son 24 saate göre" : "Önceki kapanışa göre";
+  const all = [
+    { key: "rec", label: "Teknik puan", hint: "TradingView: 26 gösterge (ortalamalar, osilatörler)", v: r.rec, comp: isNum(r.rec) ? clamp(r.rec) : null, display: isNum(r.rec) ? `${recLabel(r.rec)} (${fmtNum(r.rec, 2)})` : "veri yok" },
+    { key: "pw", label: "Haftalık değişim", hint: "Bir hafta önceye göre", v: r.pw, comp: isNum(r.pw) ? Math.tanh(r.pw / 8) : null, display: fmtPct(r.pw) },
+    { key: "ch", label: r.m === "kripto" ? "24 saatlik değişim" : "Günlük değişim", hint: day, v: r.ch, comp: isNum(r.ch) ? Math.tanh(r.ch / 4) : null, display: fmtPct(r.ch) },
+    { key: "rsi", label: "RSI (14)", hint: rsiZone(r.rsi), v: r.rsi, comp: isNum(r.rsi) ? clamp((r.rsi - 50) / 25) : null, display: isNum(r.rsi) ? fmtNum(r.rsi, 0) : "veri yok" },
+  ].map((f) => ({ ...f, weight: WEIGHTS[f.key] }));
+  const have = all.filter((f) => f.comp !== null);
+  if (have.length < 2) return { ok: false, reason: "Bu sembol için analiz edecek kadar veri gelmedi." };
+  const wsum = have.reduce((s, f) => s + f.weight, 0);
+  const raw = have.reduce((s, f) => s + f.weight * f.comp, 0) / wsum;
+  const score = Math.round(clamp(raw) * 100);
   const label = labelFor(score);
-
-  // Confidence: do the components agree, is the move calm enough, is the history complete?
-  const meaningful = Object.values(comp).filter((c) => Math.abs(c) >= 0.1);
-  const agree = meaningful.length ? meaningful.filter((c) => Math.sign(c) === Math.sign(raw || 1)).length / meaningful.length : 0.5;
-  let conf = agree;
-  if (vol != null && vol > 6) conf -= 0.2;
-  if (closes.length < 140) conf -= 0.15;
+  const strong = have.filter((f) => Math.abs(f.comp) > 0.1);
+  let conf = strong.length ? strong.filter((f) => Math.sign(f.comp) === Math.sign(raw || 1)).length / strong.length : 0.5;
+  conf -= 0.15 * (4 - have.length); // each missing input lowers the confidence
   const confidence = Math.abs(score) < 15 ? "düşük" : conf >= 0.75 ? "yüksek" : conf >= 0.5 ? "orta" : "düşük";
 
-  const rsiZone = r == null ? "—" : r >= 70 ? "aşırı alım bölgesi" : r <= 30 ? "aşırı satım bölgesi" : "dengeli bölge";
-  const volZone = vol == null ? "—" : vol < 2 ? "sakin" : vol < 5 ? "orta" : "çok oynak";
-
-  const factors = [
-    { key: "trend", label: "Ortalama farkı", hint: "24 saatlik ortalama, 72 saatlik ortalamaya göre", display: fmtPct(gap), comp: comp.trend, weight: WEIGHTS.trend },
-    { key: "mom7", label: "7 günlük değişim", hint: "Bir hafta önceki fiyata göre", display: fmtPct(ch7), comp: comp.mom7, weight: WEIGHTS.mom7 },
-    { key: "mom24", label: "24 saatlik değişim", hint: "Dünkü fiyata göre", display: fmtPct(ch24), comp: comp.mom24, weight: WEIGHTS.mom24 },
-    { key: "rsi", label: "RSI (14 saat)", hint: rsiZone, display: r == null ? "—" : r.toLocaleString("tr-TR", { maximumFractionDigits: 0 }), comp: comp.rsi, weight: WEIGHTS.rsi },
-  ];
-
   const parts = [];
-  const day = Math.abs(ch24) < 0.01 ? "son 24 saatte yatay seyretti" : `son 24 saatte ${fmtPct(Math.abs(ch24), { sign: false })} ${ch24 >= 0 ? "yükseldi" : "geriledi"}`;
-  const week = Math.abs(ch7) < 0.01 ? "bir haftada yatay kaldı" : `bir haftada ${fmtPct(Math.abs(ch7), { sign: false })} değer ${ch7 >= 0 ? "kazandı" : "kaybetti"}`;
-  parts.push(`${coin.name} ${day}, ${week}.`);
-  if (Math.abs(gap) >= 0.05) parts.push(`Kısa vadeli ortalama uzun vadelinin ${fmtPct(Math.abs(gap), { sign: false })} ${gap >= 0 ? "üstünde" : "altında"}.`);
-  if (r != null) parts.push(`RSI ${Math.round(r)} ile ${rsiZone}.`);
-  if (r != null && r >= 70) parts.push("Aşırı alım, kısa vadede soluklanma riskine işaret edebilir.");
-  if (r != null && r <= 30) parts.push("Aşırı satım, tepki yükselişi ihtimaline işaret edebilir.");
+  if (isNum(r.ch)) parts.push(`${r.name} ${r.m === "kripto" ? "son 24 saatte" : "bugün"} ${Math.abs(r.ch) < 0.01 ? "yatay" : pctWord(r.ch, "yükseldi", "geriledi")}${isNum(r.pw) ? `, bir haftada ${Math.abs(r.pw) < 0.01 ? "yatay kaldı" : pctWord(r.pw, "değer kazandı", "değer kaybetti")}` : ""}.`);
+  if (isNum(r.rec)) parts.push(`TradingView teknik puanı: ${recLabel(r.rec).toLocaleLowerCase("tr-TR")}.`);
+  if (isNum(r.rsi)) parts.push(`RSI ${Math.round(r.rsi)} ile ${rsiZone(r.rsi)}.`);
+  if (isNum(r.rsi) && r.rsi >= 70) parts.push("Aşırı alım, kısa vadede soluklanma riskine işaret edebilir.");
+  if (isNum(r.rsi) && r.rsi <= 30) parts.push("Aşırı satım, tepki yükselişi ihtimaline işaret edebilir.");
 
   return {
-    ok: true, score, label, confidence, factors, summary: parts.join(" "),
-    rsi: r, rsiZone, vol, volZone, range: { lo, hi, pos }, price, points: closes.length,
+    ok: true, score, label, confidence, factors: all, summary: parts.join(" "),
+    missing: all.filter((f) => f.comp === null).map((f) => f.label),
   };
 }
 
-/* ---------- TradingView symbols ---------- */
-const BINANCE = new Set(["btc", "eth", "bnb", "sol", "xrp", "doge", "ada", "trx", "avax", "link", "dot", "ton", "shib", "ltc", "bch", "near", "uni", "apt", "icp", "etc", "fil", "atom", "xlm", "sui", "pepe", "hbar", "arb", "op", "inj", "render", "aave", "wld", "ena", "tao", "pol", "trump", "bonk", "wif", "sei", "tia", "jup", "ondo", "kas", "hype", "xmr", "algo", "vet", "cro"]);
-const WRAPPED = { wbtc: "BINANCE:BTCUSDT", cbbtc: "BINANCE:BTCUSDT", weth: "BINANCE:ETHUSDT", steth: "BINANCE:ETHUSDT", wsteth: "BINANCE:ETHUSDT", weeth: "BINANCE:ETHUSDT", reth: "BINANCE:ETHUSDT", wbeth: "BINANCE:ETHUSDT" };
-const STABLE_TV = { usdt: "BINANCE:USDCUSDT", usdc: "BINANCE:USDCUSDT", fdusd: "BINANCE:FDUSDUSDT", dai: "COINBASE:DAIUSD" };
-
-export function tvSymbolFor(coin) {
-  const s = String((coin && coin.symbol) || "").toLowerCase();
-  if (!s) return "BINANCE:BTCUSDT";
-  if (WRAPPED[s]) return WRAPPED[s];
-  if (STABLE_TV[s]) return STABLE_TV[s];
-  if (BINANCE.has(s)) return `BINANCE:${s.toUpperCase()}USDT`;
-  return `CRYPTO:${s.toUpperCase()}USD`;
+/* ---------- market breadth ---------- */
+export function breadth(rows) {
+  const list = (rows || []).filter((r) => isNum(r.ch));
+  const up = list.filter((r) => r.ch > 0.005).length;
+  const down = list.filter((r) => r.ch < -0.005).length;
+  const avg = list.length ? list.reduce((s, r) => s + r.ch, 0) / list.length : null;
+  const sorted = [...list].sort((a, b) => b.ch - a.ch);
+  return { total: list.length, up, down, flat: list.length - up - down, avg, gainers: sorted.slice(0, 5), losers: sorted.slice(-5).reverse() };
 }
-
-export const STOCKS = [
-  { id: "stock-nvda", symbol: "NVDA", name: "NVIDIA", tv: "NASDAQ:NVDA", venue: "NASDAQ" },
-  { id: "stock-aapl", symbol: "AAPL", name: "Apple", tv: "NASDAQ:AAPL", venue: "NASDAQ" },
-  { id: "stock-tsla", symbol: "TSLA", name: "Tesla", tv: "NASDAQ:TSLA", venue: "NASDAQ" },
-  { id: "stock-googl", symbol: "GOOGL", name: "Alphabet", tv: "NASDAQ:GOOGL", venue: "NASDAQ" },
-];
-
-/* ---------- small helpers ---------- */
-export function sparkPath(values, w, h, pad = 2) {
-  const v = (values || []).filter(isNum);
-  if (v.length < 2) return "";
-  let lo = Infinity, hi = -Infinity;
-  for (const x of v) { if (x < lo) lo = x; if (x > hi) hi = x; }
-  const span = hi - lo || 1;
-  const step = (w - pad * 2) / (v.length - 1);
-  let d = "";
-  for (let i = 0; i < v.length; i++) {
-    const x = pad + i * step;
-    const y = pad + (h - pad * 2) * (1 - (v[i] - lo) / span);
-    d += (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-  }
-  return d;
-}
-
-// Down-sample a long series to at most n points (keeps first/last), for light SVG paths.
-export function thin(values, n) {
-  const v = (values || []).filter(isNum);
-  if (v.length <= n) return v;
-  const out = [];
-  const step = (v.length - 1) / (n - 1);
-  for (let i = 0; i < n; i++) out.push(v[Math.round(i * step)]);
-  return out;
-}
-
-export function trLower(s) { return String(s || "").toLocaleLowerCase("tr-TR"); }
