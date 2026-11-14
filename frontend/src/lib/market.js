@@ -75,9 +75,13 @@ const STABLES = new Set("usdt usdc dai fdusd tusd usdd usde pyusd busd usdp gusd
 
 export const isStable = (r) => r && r.m === "kripto" && STABLES.has(trLower(r.sym));
 
+const EMBED = { "SP:SPX": "FOREXCOM:SPXUSD", "DJ:DJI": "FOREXCOM:DJI", "NASDAQ:NDX": "FOREXCOM:NSXUSD", "NASDAQ:IXIC": "FOREXCOM:NSXUSD", "CBOE:VIX": "TVC:VIX", "FX_IDC:XAUTRYG": "OANDA:XAUUSD" };
+// BIST data may not be shown in embedded TradingView widgets (licence): those open on tradingview.com instead.
+export const embeddable = (r) => !(r && (r.m === "bist" || /^BIST:/.test(r.tv || r.id || "")));
+export const tvLink = (r) => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvFor(r))}`;
 export function tvFor(r) {
   if (!r) return "BINANCE:BTCUSDT";
-  if (r.tv) return r.tv;
+  if (r.tv) return EMBED[r.tv] || r.tv;
   const s = trLower(r.sym);
   if (s === "wbtc" || s === "cbbtc") return "BINANCE:BTCUSDT";
   if (s === "steth" || s === "wsteth" || s === "weth" || s === "weeth") return "BINANCE:ETHUSDT";

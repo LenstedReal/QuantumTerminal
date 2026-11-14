@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { tvFor } from "@/lib/market";
+import { embeddable, tvFor, tvLink } from "@/lib/market";
 import TVWidget from "@/components/qt/TVWidget";
 
 const MARKETS = [
@@ -23,7 +23,13 @@ export default function RightPanel({ asset, tab, onTab }) {
         <button type="button" role="tab" aria-selected={tab === "screener"} onClick={() => onTab("screener")} data-testid="tab-screener">Tarayıcı</button>
       </div>
 
-      {tab === "tech" && (
+      {tab === "tech" && asset && !embeddable(asset) && (
+        <div className="qt-widget-body qt-tv-out" role="tabpanel" data-testid="tech-out">
+          <p>BIST hisselerinin teknik özeti TradingView'da açılır. Bu sayfadaki Kuantum analiz aynı verilerle hesaplanır.</p>
+          <a className="qt-btn" href={tvLink(asset)} target="_blank" rel="noopener noreferrer">TradingView'da aç</a>
+        </div>
+      )}
+      {tab === "tech" && !(asset && !embeddable(asset)) && (
         <div className="qt-widget-body" role="tabpanel">
           <TVWidget
             label="Teknik özet"

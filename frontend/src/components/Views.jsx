@@ -121,14 +121,6 @@ export function HeatmapView({ markets, onPick }) {
           <Treemap rows={rows} onPick={onPick} wide={wide} count={m === "kripto" ? 80 : 70} />
         </div>
       </Panel>
-      <Panel num="10" title="TradingView kripto ısı haritası" sub="Tüm kripto piyasası" testid="heat-crypto">
-        <TVWidget className="qt-vtv" label="Kripto ısı haritası" script="embed-widget-crypto-coins-heatmap.js"
-          config={{ dataSource: "Crypto", blockSize: "market_cap_calc", blockColor: "change", locale: "tr", symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" }} />
-      </Panel>
-      <Panel num="11" title="TradingView S&P 500 ısı haritası" sub="Sektörlere göre" testid="heat-stocks">
-        <TVWidget className="qt-vtv" label="Hisse ısı haritası" script="embed-widget-stock-heatmap.js"
-          config={{ exchanges: [], dataSource: "SPX500", grouping: "sector", blockSize: "market_cap_basic", blockColor: "change", locale: "tr", symbolUrl: "", colorTheme: "dark", hasTopBar: true, isDataSetEnabled: false, isZoomEnabled: true, hasSymbolTooltip: true, isMonoSize: false, width: "100%", height: "100%" }} />
-      </Panel>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { fmtCompact, fmtNum, fmtPct, isNum, marketLabel, priceOf, tone, tvFor } from "@/lib/market";
+import { embeddable, fmtCompact, fmtNum, fmtPct, isNum, marketLabel, priceOf, tone, tvFor, tvLink } from "@/lib/market";
 import { Icon, Mark, Scramble } from "@/components/qt/ui";
 import TVWidget from "@/components/qt/TVWidget";
 
@@ -111,6 +111,12 @@ export default function Instrument({ row, byId, favs, onFav, onPick, tick, loadi
         </div>
       )}
 
+      {row && !embeddable(row) ? (
+        <div className="qt-chart-tv qt-tv-out" data-testid="chart-out">
+          <p>Borsa İstanbul grafikleri lisans kuralı gereği başka sitelere gömülemiyor.</p>
+          <a className="qt-btn" href={tvLink(row)} target="_blank" rel="noopener noreferrer">{row.sym} grafiğini TradingView'da aç</a>
+        </div>
+      ) : (
       <TVWidget
         className="qt-chart-tv"
         label="Grafik"
@@ -131,6 +137,7 @@ export default function Instrument({ row, byId, favs, onFav, onPick, tick, loadi
           support_host: "https://www.tradingview.com",
         }}
       />
+      )}
       {row && isNum(row.p) && <span className="qt-sr">{`${row.name}: ${priceOf(row)}, ${fmtNum(row.ch, 2)} yüzde`}</span>}
     </section>
   );
